@@ -1,0 +1,10 @@
+members =  SequenceProxy(dict_values([<Member id=745030374165315705 name='munimuni' discriminator='6591' bot=False nick=None guild=<Guild id=1080169260434870323 name='そふむにのサーバー' shard_id=0 chunked=True member_count=4>>, <Member id=412205375337660416 name='むに' discriminator='0013' bot=False nick=None guild=<Guild id=1080169260434870323 name='そふむにのサーバー' shard_id=0 chunked=True member_count=4>>, <Member id=1041333691152093264 name='むに2nd' discriminator='0640' bot=False nick=None guild=<Guild id=1080169260434870323 name='そふむにのサーバー' shard_id=0 chunked=True member_count=4>>, <Member id=1080172426496847892 name='人狼GMbot' discriminator='8077' bot=True nick=None guild=<Guild id=1080169260434870323 name='そふむにのサーバー' shard_id=0 chunked=True member_count=4>>]))
+
+SequenceProxy(dict_values([<Role id=1080169260434870323 name='@everyone'>, <Role id=1080191525880860736 name='人狼GMbot'>]))
+
+()
+
+[<VoiceChannel id=1080169261064003698 name='ロビー' rtc_region=None position=4 bitrate=64000 video_quality_mode=<VideoQualityMode.auto: 1> user_limit=0 category_id=1080169261064003697>]
+[<Member id=745030374165315705 name='munimuni' discriminator='6591' bot=False nick=None guild=<Guild id=1080169260434870323 name='そふむにのサーバー' shard_id=0 chunked=True member_count=4>>]
+
+[<TextChannel id=1080169261064003695 name='一般' position=1 nsfw=False news=False category_id=1080169261064003694>, <TextChannel id=1080192088370577449 name='人狼' position=3 nsfw=False news=False category_id=1080169261064003694>, <TextChannel id=1080220504721461299 name='開発メモ' position=4 nsfw=False news=False category_id=1080169261064003694>]
