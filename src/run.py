@@ -88,7 +88,6 @@ async def start(ctx:discord.Interaction):
 )
 @discord.app_commands.guild_only()
 async def stop(ctx:discord.Interaction):
-    print('stop')
     embed = discord.Embed(title="stopコマンド", description="stopコマンドが実行されました。\nおやすみなさい。")
     await ctx.response.send_message(embed=embed)
 
