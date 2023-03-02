@@ -1,3 +1,4 @@
+import discord
 from Job.Job import Job
 
 class Player():
@@ -6,6 +7,8 @@ class Player():
         self.id = id
         self.is_alive = True
         self.job = None
+        self.my_channel = None
+
     def get_name(self) -> str:
         return self.name
     def get_is_alive(self) -> bool:
@@ -14,3 +17,7 @@ class Player():
         self.is_alive = True
     def add_job(self, job:Job):
         self.job = job
+    def link_my_channel(self, channel:discord.TextChannel):
+        self.my_channel = channel
+    def get_my_channel(self) -> discord.TextChannel:
+        return self.my_channel

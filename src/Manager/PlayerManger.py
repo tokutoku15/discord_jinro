@@ -18,7 +18,8 @@ class PlayerManager():
             return text
         text = member.name+"さんがゲームに参加しました。"
         print("PlayerManager:", self.player_dict)
-        player = Player(member.name, member.id)
+        player_name = 'player-'+member.name
+        player = Player(player_name, member.id)
         self.player_dict[member.id] = player
         return text
     
@@ -32,3 +33,10 @@ class PlayerManager():
         print("PlayerManager:", self.player_dict)
         self.player_dict.pop(member.id)
         return text
+
+    # プレイヤーリスト取得
+    def get_player_list(self) -> list:
+        ret = []
+        for p in self.player_dict.values():
+            ret.append(p)
+        return ret

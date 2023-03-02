@@ -1,6 +1,7 @@
 # coding:utf-8
 import discord
 import discord.app_commands
+from discord.utils import get
 from Handler.CommandHandler import CommandHandler
 from Manager.PlayerManger import PlayerManager
 from Manager.RoleManager import RoleManager
@@ -39,6 +40,7 @@ async def join(ctx:discord.Interaction):
         await ctx.response.send_message(text, ephemeral=True)
         return
     text = playerManager.register_player(ctx.user)
+    await roleManager.create_role(ctx.user)
     await ctx.response.send_message(text)
 
 @tree.command(name='exit', description='人狼ゲームから退出する(ゲームが始まる前)')
@@ -58,6 +60,11 @@ async def run(ctx:discord.Interaction):
     if err:
         await ctx.response.send_message(text, ephemeral=True)
         return
+    # voiceチャンネルに人がいるなら参加
+    if voice_channel.members:
+        for mem in voice_channel.members:
+            playerManager.register_player(mem)
+            await roleManager.create_role(mem)
     await ctx.response.send_message(text)
 
 @tree.command(name='start', description='人狼ゲームを始める')
@@ -67,6 +74,10 @@ async def start(ctx:discord.Interaction):
     if err:
         await ctx.response.send_message(text, ephemeral=True)
         return
+    # プライベートチャンネルの作成
+    player_list = playerManager.get_player_list()
+    for player in player_list:
+        await textChannelManager.create_private_channel(player.get_name())
     await ctx.response.send_message(text)
 
 @tree.command(name='bye', description='人狼GMbotを停止する')
