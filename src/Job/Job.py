@@ -1,8 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
 class Job(metaclass=ABCMeta):
-    def __init__(self):
-        pass
+    def __init__(self, job_name:str, job_display_name:str, is_werewolf:bool=False):
+        self.job_name = job_name
+        self.job_display_name = job_display_name
+        self.is_werewolf = is_werewolf
     
     def set_job_name(self, name:str):
         self.job_name = name
