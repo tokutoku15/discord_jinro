@@ -1,10 +1,10 @@
 from Job.Job import Job
 from Player.Player import Player
 
-class Fortuneteller(Job):
+class Seer(Job):
     def __init__(self):
         super().__init__(
-            job_name='fortuneteller',
+            job_name='seer',
             job_display_name='占い師'
         )
     

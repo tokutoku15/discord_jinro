@@ -3,10 +3,6 @@ import discord
 import discord.app_commands
 from discord.utils import get
 from Handler.CommandHandler import CommandHandler
-from Manager.PlayerManger import PlayerManager
-from Manager.RoleManager import RoleManager
-from Manager.TextChannelManager import TextChannelManager
-from Assets.Button import CreateButton
 #======== file read ============#
 f = open('.env', 'r', encoding='UTF-8')
 env = f.read().split()
@@ -20,122 +16,167 @@ f.close()
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
-#========== class instance ==============#
-cmdHander = CommandHandler()
-playerManager = PlayerManager()
-roleManager = RoleManager()
-textChannelManager = TextChannelManager()
+#======== class instances =========#
+cmdHandler = CommandHandler()
 #========= global =============#
 message = None
 guild = None
-text_channel = None
-jinro_text_channel = None
+lobby_channel = None
+jinro_channel = None
 voice_channel = None
 
-@tree.command(name='join', description='人狼ゲームに参加する(ゲームが始まる前)')
+@tree.command(name='join', description='人狼ゲームに参加する(ゲーム開始前)')
 @discord.app_commands.guild_only()
 async def join(ctx:discord.Interaction):
-    text, err = cmdHander.join(ctx=ctx)
-    if err:
-        await ctx.response.send_message(text, ephemeral=True)
-        return
-    text = playerManager.register_player(ctx.user)
-    await roleManager.create_role(ctx.user)
-    await ctx.response.send_message(text)
+    await cmdHandler.join(ctx=ctx)
 
-@tree.command(name='exit', description='人狼ゲームから退出する(ゲームが始まる前)')
+@tree.command(name='exit', description='人狼ゲームから退出する(ゲーム開始前)')
 @discord.app_commands.guild_only()
 async def exit(ctx:discord.Interaction):
-    text, err = cmdHander.exit(ctx=ctx)
-    if err:
-        await ctx.response.send_message(text, ephemeral=True)
-        return
-    text = playerManager.remove_player(ctx.user)
-    await ctx.response.send_message(text)
+    await cmdHandler.exit(ctx=ctx)
 
 @tree.command(name='run', description='人狼GMbotを起動する')
 @discord.app_commands.guild_only()
 async def run(ctx:discord.Interaction):
-    text, err = cmdHander.run()
-    if err:
-        await ctx.response.send_message(text, ephemeral=True)
-        return
-    # voiceチャンネルに人がいるなら参加
-    if voice_channel.members:
-        for mem in voice_channel.members:
-            playerManager.register_player(mem)
-            await roleManager.create_role(mem)
-    await ctx.response.send_message(text)
+    await cmdHandler.run(ctx=ctx)
+
+#============= Game Setting Commands ======================
+@tree.command(name='onenightkill', description='第一夜の襲撃の設定')
+@discord.app_commands.describe(text="ありかなしか")
+@discord.app_commands.rename(text='onoff')
+@discord.app_commands.choices(
+    text=[
+        discord.app_commands.Choice(name="あり",value="on"),
+        discord.app_commands.Choice(name="なし",value="off"),
+    ]
+)
+@discord.app_commands.guild_only()
+async def onenightkill(ctx:discord.Interaction, text:str):
+    await cmdHandler.onenightkill(ctx=ctx, onoff=text)
+
+@tree.command(name='onenightseer', description='第一夜の占いの設定')
+@discord.app_commands.describe(text="ありかなしか")
+@discord.app_commands.rename(text='onoff')
+@discord.app_commands.choices(
+    text=[
+        discord.app_commands.Choice(name="あり",value="on"),
+        discord.app_commands.Choice(name="なし",value="off"),
+    ]
+)
+@discord.app_commands.guild_only()
+async def onenightseer(ctx:discord.Interaction, text:str):
+    await cmdHandler.onenightseer(ctx=ctx, onoff=text)
+
+@tree.command(name='citizen', description='市民の数を決める')
+@discord.app_commands.describe(text="市民の数")
+@discord.app_commands.rename(text='number')
+@discord.app_commands.guild_only()
+async def citizen(ctx:discord.Interaction, text:str):
+    try:
+        await cmdHandler.citizen(ctx=ctx, num=int(text))
+    except:
+        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
+
+@tree.command(name='werewolf', description='人狼の数を決める')
+@discord.app_commands.describe(text="人狼の数")
+@discord.app_commands.rename(text='number')
+@discord.app_commands.guild_only()
+async def werewolf(ctx:discord.Interaction, text:str):
+    try:
+        await cmdHandler.werewolf(ctx=ctx, num=int(text))
+    except:
+        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
+
+@tree.command(name='knight', description='騎士の数を決める')
+@discord.app_commands.describe(text="騎士の数")
+@discord.app_commands.rename(text='number')
+@discord.app_commands.choices(
+    text=[
+        discord.app_commands.Choice(name="1",value="1"),
+        discord.app_commands.Choice(name="0",value="0"),
+    ]
+)
+@discord.app_commands.guild_only()
+async def knight(ctx:discord.Interaction, text:str):
+    try:
+        await cmdHandler.knight(ctx=ctx, num=int(text))
+    except:
+        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
+
+@tree.command(name='seer', description='占い師の数を決める')
+@discord.app_commands.describe(text="占い師の数")
+@discord.app_commands.rename(text='number')
+@discord.app_commands.choices(
+    text=[
+        discord.app_commands.Choice(name="1",value="1"),
+        discord.app_commands.Choice(name="0",value="0"),
+    ]
+)
+@discord.app_commands.guild_only()
+async def seer(ctx:discord.Interaction, text:str):
+    try:
+        await cmdHandler.seer(ctx=ctx, num=int(text))
+    except:
+        await ctx.response.send_message('数字を設定してください', ephemeral=True)
+
+@tree.command(name='medium', description='霊媒師の数を決める')
+@discord.app_commands.describe(text="霊媒師の数")
+@discord.app_commands.rename(text='number')
+@discord.app_commands.choices(
+    text=[
+        discord.app_commands.Choice(name="1",value="1"),
+        discord.app_commands.Choice(name="0",value="0"),
+    ]
+)
+@discord.app_commands.guild_only()
+async def medium(ctx:discord.Interaction, text:str):
+    try:
+        await cmdHandler.medium(ctx=ctx, num=int(text))
+    except:
+        await ctx.response.send_message('数字を設定してください', ephemeral=True)
+
+#==========================================================
 
 @tree.command(name='start', description='人狼ゲームを始める')
 @discord.app_commands.guild_only()
 async def start(ctx:discord.Interaction):
-    text, err = cmdHander.start()
-    if err:
-        await ctx.response.send_message(text, ephemeral=True)
-        return
-    # プライベートチャンネルの作成
-    player_list = playerManager.get_player_list()
-    for player in player_list:
-        await textChannelManager.create_private_channel(player.get_name())
-    await ctx.response.send_message(text)
+    await cmdHandler.start(ctx=ctx)
 
-@tree.command(name='bye', description='人狼GMbotを停止する')
+@tree.command(name='stop', description='人狼GMbotを停止する')
 @discord.app_commands.guild_only()
 async def stop(ctx:discord.Interaction):
-    text, err = cmdHander.stop()
-    if err:
-        await ctx.response.send_message(text, ephemeral=True)
-        return
-    await ctx.response.send_message(text)
+    pass
 
-@tree.command(name='ability', description='役職の能力を使う')
+@tree.command(name='ability', description='役職の能力を使う(ゲーム中)')
 @discord.app_commands.describe(text="能力の使用対象 ex. @player-{hogehoge}")
 @discord.app_commands.rename(text='player')
 @discord.app_commands.guild_only()
 async def ability(ctx:discord.Interaction, text:str):
-    text, err = cmdHander.ability(text)
-    if err:
-        await ctx.response.send_message(text, ephemeral=True)
-        return
-    await ctx.response.send_message(text)
+    pass
 
-@tree.command(name='vote', description='処刑するプレイヤーに投票する')
+@tree.command(name='vote', description='処刑するプレイヤーに投票する(ゲーム中)')
 @discord.app_commands.describe(text="投票の対象 ex. @player-{hogehoge}")
 @discord.app_commands.rename(text='player')
 @discord.app_commands.guild_only()
 async def vote(ctx:discord.Interaction, text:str):
-    text, err = cmdHander.vote(text)
-    if err:
-        await ctx.response.send_message(text, ephemeral=True)
-        return
-    await ctx.response.send_message(text)
+    pass
 
 @tree.command(name="button", description="Embedを編集する")
 @discord.app_commands.guild_only()
 async def button(ctx:discord.Interaction):
-    global message
-    embed = discord.Embed(title="buttonコマンド", description="ボタン1")
-    if message is None:
-        message = await text_channel.send(embed=embed,  view=CreateButton())
-        await ctx.response.send_message(f'メッセージはボタン1です', ephemeral=True)
-        return
-    await message.delete()
-    message = await text_channel.send(embed=embed,view=CreateButton())
-    await ctx.response.send_message(f'メッセージはボタン1です', ephemeral=True)
+    pass
 
 @client.event
 async def on_ready():
     global guild
-    global text_channel
-    global jinro_text_channel
+    global lobby_channel
+    global jinro_channel
     global voice_channel
     guild = client.get_guild(GUILD_ID)
-    text_channel = client.get_channel(TEXT_CHANNEL_ID)
-    jinro_text_channel = client.get_channel(JINRO_CHANNEL_ID)
+    lobby_channel = client.get_channel(TEXT_CHANNEL_ID)
+    jinro_channel = client.get_channel(JINRO_CHANNEL_ID)
     voice_channel = client.get_channel(VOICE_CHANNEL_ID)
-    roleManager.register_guild(guild)
-    textChannelManager.register_guild(guild)
+    cmdHandler.link_channels(lobby_channel,jinro_channel,voice_channel)
     print(client.user.name)
     print(client.user.id)
     print('=================')

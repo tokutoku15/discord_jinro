@@ -1,10 +1,10 @@
 from Job.Job import Job
 from Player.Player import Player
 
-class Knight(Job):
+class Medium(Job):
     def __init__(self):
         super().__init__(
-            job_name='psychic',
+            job_name='Medium',
             job_display_name='霊媒師'
         )
     

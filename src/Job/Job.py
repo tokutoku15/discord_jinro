@@ -6,6 +6,9 @@ class Job(metaclass=ABCMeta):
         self.job_display_name = job_display_name
         self.is_werewolf = is_werewolf
     
+    def __str__(self):
+        return self.job_display_name
+    
     def set_job_name(self, name:str):
         self.job_name = name
     def set_job_display_name(self, name:str):
