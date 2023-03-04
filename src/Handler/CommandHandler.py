@@ -58,7 +58,7 @@ class CommandHandler():
         text = ''
         if not await self.is_lobby_channel(ctx):
             return
-        if not await self.is_bot_active(ctx):
+        if not await self.is_bot_sleep(ctx):
             return
         if not await self.is_game_ready(ctx):
             return
@@ -173,6 +173,12 @@ class CommandHandler():
         self.jobManager.set_job_num(5, num)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
+    
+    async def help(self, ctx:discord.Interaction):
+        text = 'ゲーム設定コマンドを表示します'
+        await ctx.response.send_message(text)
+        embed = self.gameRuleManager.help_command_Embed()
+        await self.lobby_channel.send(embed=embed)
 
     async def start(self, ctx:discord.Interaction):
         if not await self.is_lobby_channel(ctx):
@@ -183,7 +189,7 @@ class CommandHandler():
             return
         self.gameStateManager.game_start()
         await self.menu_message.delete()
-        text = 'それではゲームを始めます。'
+        text = 'ゲームを始めます。'
         await ctx.response.send_message(text)
 
 
@@ -206,6 +212,13 @@ class CommandHandler():
     async def is_bot_active(self, ctx:discord.Interaction) -> bool:
         if not self.gameStateManager.get_is_bot_active():
             text = 'botは休止中です。`/run`コマンドで起こしてください。'
+            await ctx.response.send_message(text, ephemeral=True)
+            return False
+        return True
+    
+    async def is_bot_sleep(self, ctx:discord.Interaction) -> bool:
+        if self.gameStateManager.get_is_bot_active():
+            text = 'botはすでに立ち上がっています。'
             await ctx.response.send_message(text, ephemeral=True)
             return False
         return True

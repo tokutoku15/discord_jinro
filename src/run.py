@@ -135,6 +135,10 @@ async def medium(ctx:discord.Interaction, text:str):
     except:
         await ctx.response.send_message('数字を設定してください', ephemeral=True)
 
+@tree.command(name='help', description='ゲーム設定のコマンド一覧表示')
+@discord.app_commands.guild_only()
+async def help(ctx:discord.Interaction):
+    await cmdHandler.help(ctx=ctx)
 #==========================================================
 
 @tree.command(name='start', description='人狼ゲームを始める')

@@ -10,6 +10,7 @@ class GameStateManager():
             2  : 'discuss',
             3  : 'vote',
         }
+        self.day_count = 1
         self.now_phase = 20
     
     def game_end(self):
@@ -21,6 +22,8 @@ class GameStateManager():
         self.now_phase %= 4
     def get_now_state(self) -> str:
         return self.game_phase[self.now_phase]
+    def next_day(self):
+        self.day_count += 1
 
     def active_bot(self):
         self.is_bot_active = True
@@ -32,6 +35,7 @@ class GameStateManager():
         self.game_setting()
     def game_stop(self):
         self.is_game_start = False
+        self.day_count = 1
     
     def get_is_bot_active(self) -> bool:
         return self.is_bot_active

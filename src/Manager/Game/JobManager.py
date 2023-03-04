@@ -10,8 +10,8 @@ class JobManager():
             1 : [Citizen(), 0],
             2 : [Werewolf(), 0],
             3 : [Knight(), 0],
-            4 : [Medium(), 0],
-            5 : [Seer(), 0]
+            4 : [Seer(), 0],
+            5 : [Medium(), 0],
         }
     
     def get_job_display_list(self) -> str:
