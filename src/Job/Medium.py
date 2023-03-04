@@ -19,7 +19,8 @@ class Medium(Job):
         return text, err
     
     def request_ability(self):
-        text = 'あなたの役職は{job}です。\n' \
-               '占うプレイヤー(死亡者)を選択してください。\n' \
-               .format(job=self.job_display_name)
+        text = '占うプレイヤー(死亡者)を`/ability`で選択してください。\n'
         return text
+    
+    def description_ability(self):
+        text = '役割は死亡したプレイヤーが人狼かどうかを占うことです。'

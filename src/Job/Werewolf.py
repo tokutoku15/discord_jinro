@@ -5,7 +5,8 @@ class Werewolf(Job):
     def __init__(self):
         super().__init__(
             job_name='werewolf',
-            job_display_name='人狼'
+            job_display_name='人狼',
+            is_werewolf=True
         )
     
     def ability(self, target:Player, err=None):
@@ -19,7 +20,9 @@ class Werewolf(Job):
         return text, err
     
     def request_ability(self):
-        text = 'あなたの役職は{job}です。\n' \
-               '襲撃するプレイヤー(生存者)を選択してください。\n' \
-               .format(job=self.job_display_name)
+        text = '襲撃するプレイヤー(生存者)を`/ability`で選択してください。\n'
+        return text
+    
+    def description_ability(self):
+        text = '役割は市民を襲撃して人狼陣営が勝つことです。市民に正体を見破られてはいけません。'
         return text

@@ -22,7 +22,9 @@ class Seer(Job):
         return text, err
     
     def request_ability(self):
-        text = 'あなたの役職は{job}です。\n' \
-               '占うプレイヤー(生存者)を選択してください。\n' \
-               .format(job=self.job_display_name)
+        text ='占うプレイヤー(生存者)を`/ability`で選択してください。\n'
+        return text
+    
+    def description_ability(self):
+        text = '役割は生存しているプレイヤーを人狼かどうか占うことです。'
         return text

@@ -1,6 +1,7 @@
 import discord
 from Manager.Discord.RoleManager import RoleManager
 from Manager.Discord.TextChannelManager import TextChannelManager
+from Manager.Discord.EmojiManager import EmojiManager
 from Manager.Game.GameRuleManager import GameRuleManager
 from Manager.Game.GameStateManager import GameStateManager
 from Manager.Game.JobManager import JobManager
@@ -9,12 +10,13 @@ from GameMaster.GameMaster import GameMaster
 
 class CommandHandler():
     def __init__(self):
-        self.gameStateManager = GameStateManager()
-        self.gameRuleManager = GameRuleManager()
-        self.playerManager = PlayerManager()
         self.jobManager = JobManager()
         self.roleManager = RoleManager()
         self.textChannelManager = TextChannelManager()
+        self.emojiManager = EmojiManager()
+        self.gameStateManager = GameStateManager()
+        self.gameRuleManager = GameRuleManager()
+        self.playerManager = PlayerManager()
         self.GM = GameMaster(self.gameRuleManager, self.gameStateManager, self.jobManager, self.playerManager)
         self.menu_message = None
         self.game_guild = None
@@ -31,6 +33,9 @@ class CommandHandler():
         self.game_guild = guild
         self.roleManager.register_guild(guild=self.game_guild)
         self.textChannelManager.register_guild(guild=self.game_guild)
+        self.emojiManager.register_guild(guild=self.game_guild)
+        emoji_list = self.emojiManager.get_emoji_list()
+        self.jobManager.register_job_emoji(emoji_list)
 
     async def join(self, ctx:discord.Interaction):
         if not await self.is_lobby_channel(ctx):
@@ -140,7 +145,7 @@ class CommandHandler():
         text = '市民の数を変更しました'
         await ctx.response.send_message(text)
         await self.menu_message.delete()
-        self.jobManager.set_job_num(1, num)
+        self.jobManager.set_job_num('citizen', num)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
         print(self.menu_message)
@@ -158,7 +163,7 @@ class CommandHandler():
         text = '人狼の数を変更しました'
         await ctx.response.send_message(text)
         await self.menu_message.delete()
-        self.jobManager.set_job_num(2, num)
+        self.jobManager.set_job_num('werewolf', num)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
         print(self.menu_message)
@@ -173,7 +178,7 @@ class CommandHandler():
         text = '騎士の数を変更しました'
         await ctx.response.send_message(text)
         await self.menu_message.delete()
-        self.jobManager.set_job_num(3, num)
+        self.jobManager.set_job_num('knight', num)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
 
@@ -187,7 +192,7 @@ class CommandHandler():
         text = '占い師の数を変更しました'
         await ctx.response.send_message(text)
         await self.menu_message.delete()
-        self.jobManager.set_job_num(4, num)
+        self.jobManager.set_job_num('seer', num)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
 
@@ -201,7 +206,7 @@ class CommandHandler():
         text = '霊媒師の数を変更しました'
         await ctx.response.send_message(text)
         await self.menu_message.delete()
-        self.jobManager.set_job_num(5, num)
+        self.jobManager.set_job_num('medium', num)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
     
@@ -220,9 +225,9 @@ class CommandHandler():
             return
         if not await self.is_ok_job_count(ctx):
             return
+        self.gameStateManager.game_start()
         text = 'ゲームを始めます。'
         await ctx.response.send_message(text)
-        self.gameStateManager.game_start()
         self.assign_jobs()
         await self.make_private_channels()
         await self.GM.send_players_job()
@@ -299,10 +304,10 @@ class CommandHandler():
     async def make_private_channels(self):
         for player in self.playerManager.get_player_list():
             channel = await self.textChannelManager.create_private_channel(player_name=player.name)
-            player.set_my_channel(channel)
+            player.set_channel(channel)
     
     def assign_jobs(self):
-        job_stack = self.jobManager.get_job_stack()
+        job_stack = self.jobManager.get_stack()
         for player in self.playerManager.get_player_list():
             player.add_job(job_stack.pop(0))
-            print(player.get_my_job())
+            print(player.get_job())

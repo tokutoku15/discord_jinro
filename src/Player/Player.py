@@ -17,9 +17,9 @@ class Player():
         self.is_alive = True
     def add_job(self, job:Job):
         self.job = job
-    def get_my_job(self):
+    def get_job(self):
         return self.job
-    def set_my_channel(self, channel:discord.TextChannel):
+    def set_channel(self, channel:discord.TextChannel):
         self.my_channel = channel
-    def get_my_channel(self) -> discord.TextChannel:
+    def get_channel(self) -> discord.TextChannel:
         return self.my_channel

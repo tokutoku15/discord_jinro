@@ -42,7 +42,7 @@ class GameRuleManager():
         embed.add_field(name='第一夜の占い', value=one_night_seer)
         time = '{}分'.format(self.discuss_time)
         embed.add_field(name='話し合いの時間', value=time, inline=True)
-        job_num_text = jobManager.get_job_display_list()
+        job_num_text = jobManager.get_display_list()
         embed.add_field(name='役職リスト', value=job_num_text)
         players_text = playerManager.get_players_display()
         player_num = playerManager.get_player_count()

@@ -8,28 +8,34 @@ from Job.Knight import Knight
 class JobManager():
     def __init__(self):
         self.job_num_dict = {
-            1 : [Citizen(), 0],
-            2 : [Werewolf(), 0],
-            3 : [Knight(), 0],
-            4 : [Seer(), 0],
-            5 : [Medium(), 0],
+            'citizen' : [Citizen(), 0],
+            'werewolf' : [Werewolf(), 0],
+            'knight' : [Knight(), 0],
+            'seer' : [Seer(), 0],
+            'medium' : [Medium(), 0],
         }
     
-    def get_job_display_list(self) -> str:
+    def register_job_emoji(self, emoji_list:list):
+        for emoji in emoji_list:
+            if not emoji.name in self.job_num_dict.keys():
+                continue
+            self.job_num_dict[emoji.name][0].set_emoji(emoji)
+    
+    def get_display_list(self) -> str:
         text = ''
-        for k, v in self.job_num_dict.items():
-            print(k, str(v[0]), v[1])
-            text += '[{}]{} : `{}`人\n'.format(k,str(v[0]),v[1])
+        for v in self.job_num_dict.values():
+            print(str(v[0]), v[1])
+            text += '{} : `{}`人\n'.format(v[0],v[1])
         return text
     
-    def set_job_num(self, id:int, num:int):
-        self.job_num_dict[id][1] = num
+    def set_job_num(self, job_name:str, num:int):
+        self.job_num_dict[job_name][1] = num
     
     def set_default_num(self, member_num:int):
-        self.job_num_dict[1][1] = member_num - 1
-        self.job_num_dict[2][1] = 1
+        self.job_num_dict['citizen'][1] = member_num - 1
+        self.job_num_dict['werewolf'][1] = 1
     
-    def get_job_stack(self):
+    def get_stack(self):
         job_stack = []
         for v in self.job_num_dict.values():
             for _ in range(v[1]):

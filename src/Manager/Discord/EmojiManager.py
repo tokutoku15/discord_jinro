@@ -14,10 +14,14 @@ class EmojiManager():
         ]
 
     def register_guild(self, guild:discord.Guild):
-        self.guild = guild    
+        self.guild = guild
+        self.register_emojis()
     
     def register_emojis(self):
         for emoji in self.guild.emojis:
             if emoji.name in self.emoji_name_list:
                 self.emoji_list[emoji.name] = emoji
                 print(emoji)
+    
+    def get_emoji_list(self) -> list:
+        return [e for e in self.emoji_list.values()]

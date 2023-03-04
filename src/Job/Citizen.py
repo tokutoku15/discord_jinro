@@ -19,7 +19,9 @@ class Citizen(Job):
         return text, err
     
     def request_ability(self):
-        text = 'あなたの役職は{job}です。\n' \
-               '人狼だと思うプレイヤーを選択してください。\n' \
-               .format(job=self.job_display_name)
+        text = '人狼だと思うプレイヤーを`/ability`で選択してください。\n'
+        return text
+    
+    def description_ability(self):
+        text = '役割は人狼を処刑して市民陣営が勝つことです。'
         return text
