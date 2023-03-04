@@ -28,7 +28,7 @@ class GameStateManager():
     def active_bot(self):
         self.is_bot_active = True
         self.game_setting()
-    def inactive_bot(self):
+    def stop_bot(self):
         self.is_bot_active = False
     def game_start(self):
         self.is_game_start = True

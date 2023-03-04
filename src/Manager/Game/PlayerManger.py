@@ -1,4 +1,5 @@
 from Player.Player import Player
+from Job.Job import Job
 
 class PlayerManager():
     def __init__(self):
@@ -9,36 +10,34 @@ class PlayerManager():
             return True
         return False
     # プレイヤーをゲームに登録する
-    def register_player(self, name:str, id:int) -> str:
+    def register_player(self, name:str, id:int, err=None) -> tuple:
         text = name+"さんはもうすでにゲームに参加しています。"
         if self.is_joined_game(id=id):
             print("player ",name," has already joined")
-            return text
+            err = 'error'
+            return text, err
         text = name+"さんがゲームに参加しました。"
         player_name = 'player-'+name
         player = Player(player_name, id)
         self.player_dict[id] = player
         print("PlayerManager:", self.player_dict)
-        return text
+        return text, err
     
     # プレイヤーをゲームから削除する
-    def remove_player(self, name:str, id:int) -> str:
+    def remove_player(self, name:str, id:int, err=None) -> tuple:
         text = name+"さんはゲームに参加していません。`/join` コマンドで参加することができます"
         if not self.is_joined_game(id=id):
             print("player",name,"don't join the game")
-            return text
+            error = 'error'
+            return text, err
         text = name+"さんがゲームから退出しました"
         print("PlayerManager:", self.player_dict)
         self.player_dict.pop(id)
-        return text
+        return text, err
 
     # プレイヤー数
-    def get_player_num(self):
+    def get_player_count(self):
         return len(self.player_dict)
-    
-    # プレイヤーリストをリセット
-    def reset_player_list(self):
-        self.player_dict = {}
 
     # プレイヤーリスト取得
     def get_player_list(self) -> list:
@@ -51,7 +50,7 @@ class PlayerManager():
     def get_players_display(self):
         text = ''
         if not self.player_dict:
-            text = '参加者0人'
+            text = ''
         else:
             plist = '>\n<@!'.join([
                 str(user_id)

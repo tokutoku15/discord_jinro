@@ -98,10 +98,7 @@ async def werewolf(ctx:discord.Interaction, text:str):
 )
 @discord.app_commands.guild_only()
 async def knight(ctx:discord.Interaction, text:str):
-    try:
-        await cmdHandler.knight(ctx=ctx, num=int(text))
-    except:
-        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
+    await cmdHandler.knight(ctx=ctx, num=int(text))
 
 @tree.command(name='seer', description='占い師の数を決める')
 @discord.app_commands.describe(text="占い師の数")
@@ -114,10 +111,7 @@ async def knight(ctx:discord.Interaction, text:str):
 )
 @discord.app_commands.guild_only()
 async def seer(ctx:discord.Interaction, text:str):
-    try:
-        await cmdHandler.seer(ctx=ctx, num=int(text))
-    except:
-        await ctx.response.send_message('数字を設定してください', ephemeral=True)
+    await cmdHandler.seer(ctx=ctx, num=int(text))
 
 @tree.command(name='medium', description='霊媒師の数を決める')
 @discord.app_commands.describe(text="霊媒師の数")
@@ -130,10 +124,7 @@ async def seer(ctx:discord.Interaction, text:str):
 )
 @discord.app_commands.guild_only()
 async def medium(ctx:discord.Interaction, text:str):
-    try:
-        await cmdHandler.medium(ctx=ctx, num=int(text))
-    except:
-        await ctx.response.send_message('数字を設定してください', ephemeral=True)
+    await cmdHandler.medium(ctx=ctx, num=int(text))
 
 @tree.command(name='help', description='ゲーム設定のコマンド一覧表示')
 @discord.app_commands.guild_only()
@@ -149,21 +140,21 @@ async def start(ctx:discord.Interaction):
 @tree.command(name='stop', description='人狼GMbotを停止する')
 @discord.app_commands.guild_only()
 async def stop(ctx:discord.Interaction):
-    pass
+    await cmdHandler.stop(ctx=ctx)
 
 @tree.command(name='ability', description='役職の能力を使う(ゲーム中)')
 @discord.app_commands.describe(text="能力の使用対象 ex. @player-{hogehoge}")
 @discord.app_commands.rename(text='player')
 @discord.app_commands.guild_only()
 async def ability(ctx:discord.Interaction, text:str):
-    pass
+    await cmdHandler.ability(ctx=ctx, target=text)
 
 @tree.command(name='vote', description='処刑するプレイヤーに投票する(ゲーム中)')
 @discord.app_commands.describe(text="投票の対象 ex. @player-{hogehoge}")
 @discord.app_commands.rename(text='player')
 @discord.app_commands.guild_only()
 async def vote(ctx:discord.Interaction, text:str):
-    pass
+    await cmdHandler.vote(ctx=ctx, target=text)
 
 @tree.command(name="button", description="Embedを編集する")
 @discord.app_commands.guild_only()
@@ -180,6 +171,7 @@ async def on_ready():
     lobby_channel = client.get_channel(TEXT_CHANNEL_ID)
     jinro_channel = client.get_channel(JINRO_CHANNEL_ID)
     voice_channel = client.get_channel(VOICE_CHANNEL_ID)
+    cmdHandler.link_guild(guild)
     cmdHandler.link_channels(lobby_channel,jinro_channel,voice_channel)
     print(client.user.name)
     print(client.user.id)

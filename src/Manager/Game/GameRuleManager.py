@@ -18,7 +18,7 @@ class GameRuleManager():
             },
             'game' : {
                 '/ability' : '役職の能力を使う',
-                '/vote' : '処刑するプレイヤーへの投票',
+                '/vote' : 'プレイヤーへの投票',
             },
             'game_setting' : {
                 '/onenightkill' : '第一夜の襲撃の設定',
@@ -43,9 +43,10 @@ class GameRuleManager():
         time = '{}分'.format(self.discuss_time)
         embed.add_field(name='話し合いの時間', value=time, inline=True)
         job_num_text = jobManager.get_job_display_list()
-        embed.add_field(name="役職リスト", value=job_num_text)
+        embed.add_field(name='役職リスト', value=job_num_text)
         players_text = playerManager.get_players_display()
-        embed.add_field(name="プレイヤー", value=players_text, inline=True)
+        player_num = playerManager.get_player_count()
+        embed.add_field(name=f'プレイヤー {player_num}人', value=players_text, inline=True)
         return embed
     
     def help_command_Embed(self):
@@ -57,11 +58,11 @@ class GameRuleManager():
         game_commands = '\n'.join([
             '`{}` : {}'.format(cmd, des) for cmd, des in self.commands['game'].items()
         ])
-        embed.add_field(name='ゲームコマンド', value=game_commands)
+        embed.add_field(name='ゲームコマンド', value=game_commands, inline=True)
         game_setting_commands = '\n'.join([
             '`{}` : {}'.format(cmd, des) for cmd, des in self.commands['game_setting'].items()
         ])
-        embed.add_field(name='ゲーム設定コマンド', value=game_setting_commands)
+        embed.add_field(name='ゲーム設定コマンド', value=game_setting_commands, inline=False)
         return embed
 
     def set_one_night_kill(self, onoff:bool):
