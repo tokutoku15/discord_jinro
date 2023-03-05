@@ -18,6 +18,7 @@ class Knight(Job):
             text = '自分を選択することはできません'
             err = 'error'
             return text, err
+        target.protect()
         text = '{target}を人狼から守ります\n' \
                    .format(target=target.get_name())
         return text, err

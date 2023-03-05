@@ -187,7 +187,7 @@ class CommandHandler():
         self.jobManager.__init__()
         self.gameStateManager.game_stop()
         self.gameStateManager.stop_bot()
-        self.delete_roles_channels()
+        await self.delete_roles_channels()
         if self.menu_message:
             await self.menu_message.delete()
         text = 'ゲームを終了し、Botを停止します。おやすみなさい。'
@@ -202,6 +202,10 @@ class CommandHandler():
             return
         if not self.gameStateManager.get_is_game_start():
             text = 'ゲームは始まっていません\n`/start`コマンドでゲームを始めてください。'
+            await ctx.response.send_message(text, ephemeral=True)
+            return
+        if self.gameStateManager.now_phase() != 'night':
+            text = '今はアクションが実行できません。夜の時間に実行してください。'
             await ctx.response.send_message(text, ephemeral=True)
             return
         s_player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)

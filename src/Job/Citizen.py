@@ -18,9 +18,9 @@ class Citizen(Job):
             text = '死亡者を選択することはできません'
             err = 'error'
             return text, err
+        target.vote()
         text = '人狼だと思うプレイヤーは{target}です\n' \
                    .format(target=target.get_name())
-        target.vote()
         return text, err
     
     def request_action(self):

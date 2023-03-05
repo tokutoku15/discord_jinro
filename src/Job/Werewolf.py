@@ -23,9 +23,9 @@ class Werewolf(Job):
             text = '自分を選択することはできません'
             err = 'error'
             return text, err
+        target.will_kill()
         text = '{target}を襲撃対象にしました。\n' \
                    .format(target=target.get_name())
-        target.kill()
         return text, err
     
     def request_action(self):

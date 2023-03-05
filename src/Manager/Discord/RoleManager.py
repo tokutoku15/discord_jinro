@@ -37,5 +37,6 @@ class RoleManager():
             return
         # ロールを全て削除
         for role in self.game_guild.roles:
+            print(role.name)
             if role.name.startswith('player-'):
                 await role.delete()

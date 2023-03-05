@@ -37,6 +37,7 @@ class TextChannelManager():
     # チャンネル削除
     async def delete_channels(self):
         for channel in self.game_guild.text_channels:
+            print(channel.name)
             if not channel.name.startswith('player-'):
                 continue
             await channel.delete()

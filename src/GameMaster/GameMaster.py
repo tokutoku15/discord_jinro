@@ -19,7 +19,7 @@ class GameMaster():
         self.playerManager = playerManager
         self.lobby_channel = None
         self.colors = {
-            'night' : 0x343D73,
+            'night' : 0x444da3,
             'morning' : 0xbde3f2,
             'discuss' : 0xbde3f2,
             'vote' : 0xf29944,
@@ -98,4 +98,3 @@ class GameMaster():
         print(self.vote_count, self.playerManager.get_alive_player_count())
         if self.vote_count == self.playerManager.get_alive_player_count():
             await self.lobby_channel.send(content='全員のアクションが終了しました。')
-            self.gameStateManager

@@ -47,7 +47,7 @@ class Player():
         self.is_protected = True
     def get_protect(self):
         return self.is_protected
-    def kill(self):
+    def will_kill(self):
         self.will_be_killed = True
     def get_kill(self):
         self.will_be_killed = True
@@ -55,3 +55,11 @@ class Player():
         self.is_protected = False
         self.will_be_killed = False
         self.vote_count = 0
+    # 人狼に襲撃されたらTrue, そうでなければFalse
+    def kill(self) -> bool:
+        if self.will_be_killed and not self.is_protected:
+            return True
+        return False
+    # 犠牲者になる
+    def be_victim(self):
+        self.is_alive = False
