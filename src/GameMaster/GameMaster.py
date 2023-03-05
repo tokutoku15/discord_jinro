@@ -1,5 +1,6 @@
 import discord
 from Player.Player import Player
+from Job.Citizen import Citizen
 from Manager.Game.GameRuleManager import GameRuleManager
 from Manager.Game.GameStateManager import GameStateManager
 from Manager.Game.JobManager import JobManager
@@ -16,6 +17,7 @@ class GameMaster():
         self.gameStateManager = gameStateManager
         self.jobManager = jobManager
         self.playerManager = playerManager
+        self.lobby_channel = None
         self.colors = {
             'night' : 0x343D73,
             'morning' : 0xbde3f2,
@@ -29,6 +31,8 @@ class GameMaster():
         }
         self.vote_count = 0
     
+    def register_lobby_channel(self, channel:discord.TextChannel):
+        self.lobby_channel = channel
     async def send_night_phase(self, ctx:discord.Interaction):
         title = f'### {self.gameStateManager.day}日目の夜 ###'
         text = '恐ろしい夜がやってきました。これから夜のアクションを始めます。\n' \
@@ -63,14 +67,29 @@ class GameMaster():
                 continue
             player_job = player.get_job()
             request_text = f'{player_job.request_action()}'
+            print(player.get_job().job_name, self.gameStateManager.day)
+            if player.get_job().job_name == 'medium' and self.gameStateManager.day == 1:
+                request_text += '\n※1日目なので人狼だと思うプレイヤーを選択してください。'
             embed.description=request_text
             await player.get_channel().send(embed=embed)
     
-    async def accept_action(self, ctx:discord.Interaction, target:Player):
+    async def accept_action(self, ctx:discord.Interaction, target:Player, err=None):
         player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
-        text, err = player.get_job().action(player, target)
+        if player.get_job().job_name == 'medium' and self.gameStateManager.day == 1:
+            text, err = Citizen().action(player, target)
+        else:
+            text, err = player.get_job().action(player, target)
         if err:
             await ctx.response.send_message(text)
             return
+        if self.gameStateManager.day == 1:
+            if player.get_job().job_name == 'werewolf' and not self.gameRuleManager.one_night_kill:
+                target.will_be_killed = False
+            if player.get_job().job_name == 'seer' and not self.gameRuleManager.one_night_seer:
+                text = text.split('\n')[0] + '\n※第一夜の占いはありません'
+                target.is_reveal_seer = False
         self.vote_count += 1
         await ctx.response.send_message(text)
+        print(self.vote_count, self.playerManager.get_alive_player_count())
+        if self.vote_count == self.playerManager.get_alive_player_count():
+            await self.lobby_channel.send(content='アクションが終了しました。')

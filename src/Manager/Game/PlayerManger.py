@@ -43,6 +43,14 @@ class PlayerManager():
     # プレイヤー数
     def get_player_count(self):
         return len(self.player_dict)
+    
+    # 生存しているプレイヤー数
+    def get_alive_player_count(self):
+        count = 0
+        for player in self.player_dict.values():
+            if player.get_is_alive():
+                count += 1
+        return count
 
     # プレイヤーリスト取得
     def get_player_list(self) -> list:

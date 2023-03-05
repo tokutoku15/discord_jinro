@@ -25,11 +25,12 @@ class Werewolf(Job):
             return text, err
         text = '{target}を襲撃対象にしました。\n' \
                    .format(target=target.get_name())
+        target.kill()
         return text, err
     
     def request_action(self):
-        text = '襲撃するプレイヤー(生存者)を`/action`で選択してください。\n' \
-                'ex. `/action @player-ほげほげ`'
+        text = '襲撃するプレイヤー(生存者)を**/action**で選択してください。\n' \
+                'ex. **/action @player-ほげほげ**'
         return text
     
     def description_action(self):

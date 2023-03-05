@@ -31,6 +31,7 @@ class CommandHandler():
         self.lobby_channel = lobby_ch
         self.jinro_channel = jinro_ch
         self.voice_channel = voice_ch
+        self.GM.register_lobby_channel(self.lobby_channel)
     
     def link_info(self, guild):
         self.game_guild = guild

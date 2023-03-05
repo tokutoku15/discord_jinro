@@ -23,8 +23,8 @@ class Knight(Job):
         return text, err
     
     def request_action(self):
-        text = '人狼から守るプレイヤー(生存者)を`/action`で選択してください。\n' \
-                'ex. `/action @player-ほげほげ`'
+        text = '人狼から守るプレイヤー(生存者)を**/action**で選択してください。\n' \
+                'ex. **/action @player-ほげほげ**'
         return text
 
     def description_action(self):
