@@ -108,14 +108,14 @@ async def vote(ctx:discord.Interaction, text:str):
         discord.app_commands.Choice(name="霊媒師",value="medium"),
     ]
 )
-@discord.app_commands.describe(text="役職の数")
-@discord.app_commands.rename(text='number')
+@discord.app_commands.describe(number="役職の数")
+@discord.app_commands.rename(number='number')
 @discord.app_commands.guild_only()
-async def job(ctx:discord.Interaction, *, text:str, num:str):
+async def job(ctx:discord.Interaction, *, text:str, number:str):
     try:
-        await cmdHandler.job(ctx=ctx, name=text, num=int(num))
+        await cmdHandler.job(ctx=ctx, name=text, num=int(number))
     except:
-        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
+        await ctx.response.send_message('numberには数字を設定してください。', ephemeral=True)
 
 @client.event
 async def on_ready():

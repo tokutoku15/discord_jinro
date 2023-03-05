@@ -8,18 +8,22 @@ class Seer(Job):
             job_display_name='占い師'
         )
     
-    def action(self, target:Player, err=None):
+    def action(self, source:Player, target:Player, err=None):
         text = ''
         is_werewolf = lambda x : '人狼' if x=='werewolf' else '市民'
         if not target.get_is_alive():
             text = '死亡者を選択することはできません'
             err = 'error'
-        else:
-            target.reveal_seer()
-            text = '{target}を占いました。\n' \
-                   '{target}は{group}です。' \
-                   .format(target=target.get_name(),
-                           group=is_werewolf(target.job.group))
+            return text, err
+        if source == target:
+            text = '自分を選択することはできません'
+            err = 'error'
+            return text, err
+        target.reveal_seer()
+        text = '{target}を占いました。\n' \
+                '{target}は{group}です。' \
+                .format(target=target.get_name(),
+                        group=is_werewolf(target.job.group))
         return text, err
     
     def request_action(self):

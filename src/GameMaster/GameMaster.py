@@ -1,4 +1,5 @@
 import discord
+from Player.Player import Player
 from Manager.Game.GameRuleManager import GameRuleManager
 from Manager.Game.GameStateManager import GameStateManager
 from Manager.Game.JobManager import JobManager
@@ -26,6 +27,7 @@ class GameMaster():
             },
             'now' : 0x3c14dc,
         }
+        self.vote_count = 0
     
     async def send_night_phase(self, ctx:discord.Interaction):
         title = f'### {self.gameStateManager.day}日目の夜 ###'
@@ -63,3 +65,12 @@ class GameMaster():
             request_text = f'{player_job.request_action()}'
             embed.description=request_text
             await player.get_channel().send(embed=embed)
+    
+    async def accept_action(self, ctx:discord.Interaction, target:Player):
+        player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
+        text, err = player.job.action(player, target)
+        if err:
+            await ctx.response.send_message(text)
+            return
+        self.vote_count += 1
+        await ctx.response.send_message(text)

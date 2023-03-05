@@ -5,7 +5,10 @@ from Job.Job import Job
 
 class PlayerManager():
     def __init__(self):
-        self.player_dict = {}
+        self.player_dict = {
+            # key : id -> discord.Guild.id
+            # value : player -> Player
+        }
 
     def is_joined_game(self, id:int) -> bool:
         if id in self.player_dict.keys():
@@ -76,3 +79,12 @@ class PlayerManager():
                 count += 1
         title = f'{title} {count}人'
         return title, text
+    def get_player_from_member(self, mem_id:int) -> Player:
+        return self.player_dict[mem_id]
+
+    def get_player_from_role(self, name:str) -> Player:
+        print(name)
+        role_id = int(name.lstrip('<@&').rstrip('>'))
+        for player in self.player_dict.values():
+            if role_id == player.role.id:
+                return player

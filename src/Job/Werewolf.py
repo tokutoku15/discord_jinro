@@ -9,7 +9,7 @@ class Werewolf(Job):
             group='werewolf'
         )
     
-    def action(self, target:Player, err=None):
+    def action(self, source:Player, target:Player, err=None):
         text = ''
         if not target.get_is_alive():
             text = '死亡者を選択することはできません'
@@ -17,6 +17,10 @@ class Werewolf(Job):
             return text, err
         if target.get_job().group == self.group:
             text = '仲間の人狼を選択することはできません'
+            err = 'error'
+            return text, err
+        if source == target:
+            text = '自分を選択することはできません'
             err = 'error'
             return text, err
         text = '{target}を襲撃対象にしました。\n' \

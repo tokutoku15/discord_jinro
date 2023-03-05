@@ -14,6 +14,9 @@ class JobManager():
             'seer' : [Seer(), 0],
             'medium' : [Medium(), 0],
         }
+        self.max_limited_job = [
+            'knight', 'seer', 'medium'
+        ]
     
     def register_job_emoji(self, emoji_list:list):
         for emoji in emoji_list:
@@ -23,12 +26,19 @@ class JobManager():
     
     def get_display_list(self) -> str:
         text = ''
-        for v in self.job_num_dict.values():
+        for k, v in self.job_num_dict.items():
             print(str(v[0]), v[1])
-            text += '{} : `{}`人\n'.format(v[0],v[1])
+            text += '{} : `{}`人'.format(v[0],v[1])
+            if k in self.max_limited_job:
+                text += '(max 1)'
+            text += '\n'
         return text
     
     def set_job_num(self, job_name:str, num:int):
+        if num < 0:
+            return
+        if job_name in self.max_limited_job:
+            num = min(1, num)
         self.job_num_dict[job_name][1] = num
     
     def set_default_num(self, member_num:int):
