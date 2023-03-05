@@ -16,10 +16,12 @@ class Citizen(Job):
         else:
             text = '人狼だと思うプレイヤーは{target}です\n' \
                    .format(target=target.get_name())
+        target.vote()
         return text, err
     
     def request_action(self):
-        text = '人狼だと思うプレイヤー(生存者)を`/action`で選択してください。\n'
+        text = '人狼だと思うプレイヤー(生存者)を`/action`で選択してください。\n' \
+                'ex. `/action @player-ほげほげ`'
         return text
     
     def description_action(self):

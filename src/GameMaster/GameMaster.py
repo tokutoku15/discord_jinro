@@ -57,7 +57,6 @@ class GameMaster():
             embed = discord.Embed(title="アクションの実行", description="temp", color=self.colors['night'])
             embed.add_field(name=alive_title, value=alive_text, inline=True)
             embed.add_field(name=victim_title, value=victim_text, inline=True)
-        
             if not player.get_is_alive():
                 continue
             player_job = player.get_job()

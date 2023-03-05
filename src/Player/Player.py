@@ -11,9 +11,12 @@ class Player():
         self.is_alive = True
         self.is_reveal_seer = False
         self.is_reveal_medium = False
+        self.is_protected = False
+        self.will_be_killed = False
+        self.vote_count = 0
+
     def __str__(self):
         return self.name
-
     def get_name(self) -> str:
         return self.name
     def get_is_alive(self) -> bool:
@@ -36,3 +39,19 @@ class Player():
         self.is_reveal_medium = True
     def get_reveal_medium(self):
         return self.is_reveal_medium
+    def vote(self):
+        self.vote_count += 1
+    def reset_vote(self):
+        self.vote_count = 0
+    def protect(self):
+        self.is_protected = True
+    def get_protect(self):
+        return self.is_protected
+    def kill(self):
+        self.will_be_killed = True
+    def get_kill(self):
+        self.will_be_killed = True
+    def reset_flags(self):
+        self.is_protected = False
+        self.will_be_killed = False
+        self.vote_count = 0

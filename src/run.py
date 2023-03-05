@@ -67,70 +67,10 @@ async def onenightkill(ctx:discord.Interaction, text:str):
 async def onenightseer(ctx:discord.Interaction, text:str):
     await cmdHandler.onenightseer(ctx=ctx, onoff=text)
 
-@tree.command(name='citizen', description='市民の数を決める')
-@discord.app_commands.describe(text="市民の数")
-@discord.app_commands.rename(text='number')
-@discord.app_commands.guild_only()
-async def citizen(ctx:discord.Interaction, text:str):
-    try:
-        await cmdHandler.citizen(ctx=ctx, num=int(text))
-    except:
-        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
-
-@tree.command(name='werewolf', description='人狼の数を決める')
-@discord.app_commands.describe(text="人狼の数")
-@discord.app_commands.rename(text='number')
-@discord.app_commands.guild_only()
-async def werewolf(ctx:discord.Interaction, text:str):
-    try:
-        await cmdHandler.werewolf(ctx=ctx, num=int(text))
-    except:
-        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
-
-@tree.command(name='knight', description='騎士の数を決める')
-@discord.app_commands.describe(text="騎士の数")
-@discord.app_commands.rename(text='number')
-@discord.app_commands.choices(
-    text=[
-        discord.app_commands.Choice(name="1",value="1"),
-        discord.app_commands.Choice(name="0",value="0"),
-    ]
-)
-@discord.app_commands.guild_only()
-async def knight(ctx:discord.Interaction, text:str):
-    await cmdHandler.knight(ctx=ctx, num=int(text))
-
-@tree.command(name='seer', description='占い師の数を決める')
-@discord.app_commands.describe(text="占い師の数")
-@discord.app_commands.rename(text='number')
-@discord.app_commands.choices(
-    text=[
-        discord.app_commands.Choice(name="1",value="1"),
-        discord.app_commands.Choice(name="0",value="0"),
-    ]
-)
-@discord.app_commands.guild_only()
-async def seer(ctx:discord.Interaction, text:str):
-    await cmdHandler.seer(ctx=ctx, num=int(text))
-
-@tree.command(name='medium', description='霊媒師の数を決める')
-@discord.app_commands.describe(text="霊媒師の数")
-@discord.app_commands.rename(text='number')
-@discord.app_commands.choices(
-    text=[
-        discord.app_commands.Choice(name="1",value="1"),
-        discord.app_commands.Choice(name="0",value="0"),
-    ]
-)
-@discord.app_commands.guild_only()
-async def medium(ctx:discord.Interaction, text:str):
-    await cmdHandler.medium(ctx=ctx, num=int(text))
-
 @tree.command(name='help', description='ゲーム設定のコマンド一覧表示')
 @discord.app_commands.guild_only()
 async def help(ctx:discord.Interaction):
     await cmdHandler.help(ctx=ctx)
-#==========================================================
 
 @tree.command(name='start', description='人狼ゲームを始める')
 @discord.app_commands.guild_only()
@@ -156,10 +96,26 @@ async def action(ctx:discord.Interaction, text:str):
 async def vote(ctx:discord.Interaction, text:str):
     await cmdHandler.vote(ctx=ctx, target=text)
 
-@tree.command(name="button", description="Embedを編集する")
+@tree.command(name="job", description="役職の数を変更する")
+@discord.app_commands.describe(text="役職名")
+@discord.app_commands.rename(text='name')
+@discord.app_commands.choices(
+    text=[
+        discord.app_commands.Choice(name="市民",value="citizen"),
+        discord.app_commands.Choice(name="人狼",value="werewolf"),
+        discord.app_commands.Choice(name="騎士",value="knight"),
+        discord.app_commands.Choice(name="占い師",value="seer"),
+        discord.app_commands.Choice(name="霊媒師",value="medium"),
+    ]
+)
+@discord.app_commands.describe(text="役職の数")
+@discord.app_commands.rename(text='number')
 @discord.app_commands.guild_only()
-async def button(ctx:discord.Interaction):
-    pass
+async def job(ctx:discord.Interaction, *, text:str, num:str):
+    try:
+        await cmdHandler.job(ctx=ctx, name=text, num=int(num))
+    except:
+        await ctx.response.send_message('数字を設定してください。', ephemeral=True)
 
 @client.event
 async def on_ready():

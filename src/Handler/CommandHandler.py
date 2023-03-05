@@ -138,83 +138,18 @@ class CommandHandler():
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
         print(self.menu_message)
-
-    async def citizen(self, ctx:discord.Interaction, num:int):
-        if not await self.is_lobby_channel(ctx):
-            return
-        if not await self.is_bot_active(ctx):
-            return
-        if not await self.is_game_ready(ctx):
-            return
-        if num < 0:
-            text = '数字を0以上にしてください'
-            await ctx.response.send_message(text, ephemeral=True)
-            return
-        text = '市民の数を変更しました'
-        await ctx.response.send_message(text)
-        await self.menu_message.delete()
-        self.jobManager.set_job_num('citizen', num)
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-        print(self.menu_message)
     
-    async def werewolf(self, ctx:discord.Interaction, num:int):
+    async def job(self, ctx:discord.Interaction, name:str, num:int):
         if not await self.is_lobby_channel(ctx):
             return
         if not await self.is_bot_active(ctx):
             return
         if not await self.is_game_ready(ctx):
             return
-        if num < 0:
-            text = '数字を0以上にしてください'
-            await ctx.response.send_message(text, ephemeral=True)
-        text = '人狼の数を変更しました'
+        text = '役職の数を変更しました'
         await ctx.response.send_message(text)
+        self.jobManager.set_job_num(name, num)
         await self.menu_message.delete()
-        self.jobManager.set_job_num('werewolf', num)
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-        print(self.menu_message)
-
-    async def knight(self, ctx:discord.Interaction, num:int):
-        if not await self.is_lobby_channel(ctx):
-            return
-        if not await self.is_bot_active(ctx):
-            return
-        if not await self.is_game_ready(ctx):
-            return
-        text = '騎士の数を変更しました'
-        await ctx.response.send_message(text)
-        await self.menu_message.delete()
-        self.jobManager.set_job_num('knight', num)
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-
-    async def seer(self, ctx:discord.Interaction, num:int):
-        if not await self.is_lobby_channel(ctx):
-            return
-        if not await self.is_bot_active(ctx):
-            return
-        if not await self.is_game_ready(ctx):
-            return
-        text = '占い師の数を変更しました'
-        await ctx.response.send_message(text)
-        await self.menu_message.delete()
-        self.jobManager.set_job_num('seer', num)
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-
-    async def medium(self, ctx:discord.Interaction, num:int):
-        if not await self.is_lobby_channel(ctx):
-            return
-        if not await self.is_bot_active(ctx):
-            return
-        if not await self.is_game_ready(ctx):
-            return
-        text = '霊媒師の数を変更しました'
-        await ctx.response.send_message(text)
-        await self.menu_message.delete()
-        self.jobManager.set_job_num('medium', num)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
     
@@ -258,8 +193,17 @@ class CommandHandler():
         await ctx.response.send_message(text)
 
     async def action(self, ctx:discord.Interaction, target:str):
-        pass
-
+        if not self.textChannelManager.is_private_channel(ctx.channel):
+            text = 'プライベートチャンネルで実行してください'
+            await ctx.response.send_message(text, ephemeral=True)
+            return
+        if not await self.is_bot_active(ctx):
+            return
+        if not self.gameStateManager.get_is_game_start():
+            text = 'ゲームは始まっていません\n`/start`コマンドでゲームを始めてください。'
+            await ctx.response.send_message(text, ephemeral=True)
+            return
+    
     async def vote(self, ctx:discord.Interaction, target:str):
         pass
 

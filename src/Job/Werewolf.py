@@ -24,7 +24,8 @@ class Werewolf(Job):
         return text, err
     
     def request_action(self):
-        text = '襲撃するプレイヤー(生存者)を`/action`で選択してください。\n'
+        text = '襲撃するプレイヤー(生存者)を`/action`で選択してください。\n' \
+                'ex. `/action @player-ほげほげ`'
         return text
     
     def description_action(self):

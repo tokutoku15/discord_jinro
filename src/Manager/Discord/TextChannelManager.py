@@ -14,7 +14,7 @@ class TextChannelManager():
         role = get(self.game_guild.roles, name=player_name)
         channel = get(self.game_guild.channels, name=player_name)
         if channel:
-            # self.private_channels.append(channel)
+            self.private_channels.append(channel)
             return channel
         # 部屋の読み取り権限を変更
         overwrites = {
@@ -22,7 +22,7 @@ class TextChannelManager():
             role: discord.PermissionOverwrite(read_messages=True),
         }
         channel = await self.game_guild.create_text_channel(player_name, overwrites=overwrites)
-        # self.private_channels.append(channel)
+        self.private_channels.append(channel)
         return channel
     # チャンネルのoverwritesにroleを追加する
     async def add_role_to_channel(self, channel:discord.TextChannel, role:discord.Role):
@@ -40,3 +40,6 @@ class TextChannelManager():
             if not channel.name.startswith('player-'):
                 continue
             await channel.delete()
+    # チャンネルがプライベートチャンネルか
+    def is_private_channel(self, channel:discord.TextChannel)->bool:
+        return channel in self.private_channels
