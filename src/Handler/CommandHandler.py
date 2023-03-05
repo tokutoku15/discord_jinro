@@ -204,8 +204,17 @@ class CommandHandler():
             text = 'ゲームは始まっていません\n`/start`コマンドでゲームを始めてください。'
             await ctx.response.send_message(text, ephemeral=True)
             return
+        s_player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
+        if not s_player.get_is_alive():
+            text = '犠牲者はアクションできません。ゲームが終了するまでお待ちください。'
+            await ctx.response.send_message(text)
+            return
         # @ロール名 で送信すると <@&{ROLE_ID}> になる
         t_player = self.playerManager.get_player_from_role(name=target)
+        if t_player is None:
+            text = 'プレイヤーを選択してください ex. 「@player-ほげほげ」'
+            await ctx.response.send_message(text)
+            return
         await self.GM.accept_action(ctx=ctx, target=t_player)
     
     async def vote(self, ctx:discord.Interaction, target:str):

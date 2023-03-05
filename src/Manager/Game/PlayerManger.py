@@ -92,7 +92,10 @@ class PlayerManager():
 
     def get_player_from_role(self, name:str) -> Player:
         print(name)
+        if not name.startswith('<@&'):
+            return None
         role_id = int(name.lstrip('<@&').rstrip('>'))
         for player in self.player_dict.values():
             if role_id == player.role.id:
                 return player
+        return None
