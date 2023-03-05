@@ -26,9 +26,14 @@ class RoleManager():
         print("add role : ", role_name)
         return role
     
+    async def delete_role(self, name:str):
+        role_name = 'player-'+name
+        role = get(self.game_guild.roles, name=role_name)
+        if role:
+            await role.delete()
+    
     async def delete_roles(self):
         if self.game_guild is None:
-            print("RoleManager : Game Guile is None")
             return
         # ロールを全て削除
         for role in self.game_guild.roles:

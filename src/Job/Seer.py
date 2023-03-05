@@ -10,15 +10,16 @@ class Seer(Job):
     
     def action(self, target:Player, err=None):
         text = ''
-        check_werewolf = lambda x : '人狼' if x else '市民'
+        is_werewolf = lambda x : '人狼' if x=='werewolf' else '市民'
         if not target.get_is_alive():
             text = '死亡者を選択することはできません'
             err = 'error'
         else:
+            target.reveal_seer()
             text = '{target}を占いました。\n' \
-                   '{target}は{is_werewolf}です。' \
+                   '{target}は{group}です。' \
                    .format(target=target.get_name(),
-                           is_werewolf=check_werewolf(target.job.is_werewolf()))
+                           group=is_werewolf(target.job.group))
         return text, err
     
     def request_action(self):
@@ -26,5 +27,5 @@ class Seer(Job):
         return text
     
     def description_action(self):
-        text = '目的は生存しているプレイヤーを人狼かどうか占うことです。'
+        text = '目的は生存しているプレイヤーを占い人狼を暴くことです。人狼に襲撃されないように注意してください。'
         return text

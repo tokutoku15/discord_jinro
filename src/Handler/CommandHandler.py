@@ -1,4 +1,5 @@
 import discord
+from discord.utils import get
 import asyncio
 from Manager.Discord.RoleManager import RoleManager
 from Manager.Discord.TextChannelManager import TextChannelManager
@@ -21,6 +22,7 @@ class CommandHandler():
         self.GM = GameMaster(self.gameRuleManager, self.gameStateManager, self.jobManager, self.playerManager)
         self.menu_message = None
         self.game_guild = None
+        # self.game_guild = discord.Guild()
         self.lobby_channel = None
         self.jinro_channel = None
         self.voice_channel = None
@@ -30,13 +32,17 @@ class CommandHandler():
         self.jinro_channel = jinro_ch
         self.voice_channel = voice_ch
     
-    def link_guild(self, guild):
+    def link_info(self, guild):
         self.game_guild = guild
         self.roleManager.register_guild(guild=self.game_guild)
         self.textChannelManager.register_guild(guild=self.game_guild)
         self.emojiManager.register_guild(guild=self.game_guild)
         emoji_list = self.emojiManager.get_emoji_list()
         self.jobManager.register_job_emoji(emoji_list)
+    
+    async def delete_roles_channels(self):
+        await self.roleManager.delete_roles()
+        await self.textChannelManager.delete_channels()
 
     async def join(self, ctx:discord.Interaction):
         if not await self.is_lobby_channel(ctx):
@@ -45,11 +51,11 @@ class CommandHandler():
             return
         if not await self.is_game_ready(ctx):
             return
-        text, err  = self.playerManager.register_player(ctx.user.name, ctx.user.id)
+        role = await self.roleManager.assign_role(ctx.user)
+        text, err  = self.playerManager.register_player(ctx.user.name, ctx.user.id, role)
         if err:
             await ctx.response.send_message(text, ephemeral=True)
             return
-        await self.roleManager.assign_role(ctx.user)
         await ctx.response.send_message(text)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         print(self.menu_message)
@@ -69,6 +75,7 @@ class CommandHandler():
         if err:
             await ctx.response.send_message(text, ephemeral=True)
             return
+        await self.roleManager.delete_role(ctx.user.name)
         await ctx.response.send_message(text)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         print(self.menu_message)
@@ -90,8 +97,8 @@ class CommandHandler():
             if  member_num >= 3:
                 self.jobManager.set_default_num(member_num)
             for member in self.voice_channel.members:
-                self.playerManager.register_player(member.display_name, member.id)
-                await self.roleManager.assign_role(member)
+                role = await self.roleManager.assign_role(member)
+                self.playerManager.register_player(member.display_name, member.id, role)
         text = 'botを起動します。おはようございます。\nこれからゲームの設定を始めます。'
         await ctx.response.send_message(text)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
@@ -232,7 +239,7 @@ class CommandHandler():
         self.assign_jobs()
         await self.make_private_channels()
         await self.GM.send_players_job()
-        await asyncio.sleep(3)
+        # await asyncio.sleep(3)
         await self.GM.send_night_phase(ctx)
 
     async def stop(self, ctx:discord.Interaction):
@@ -244,7 +251,9 @@ class CommandHandler():
         self.jobManager.__init__()
         self.gameStateManager.game_stop()
         self.gameStateManager.stop_bot()
-        await self.menu_message.delete()
+        self.delete_roles_channels()
+        if self.menu_message:
+            await self.menu_message.delete()
         text = 'ゲームを終了し、Botを停止します。おやすみなさい。'
         await ctx.response.send_message(text)
 
@@ -305,8 +314,12 @@ class CommandHandler():
         return True
     
     async def make_private_channels(self):
+        category = get(self.game_guild.categories, name="人狼ゲーム")
         for player in self.playerManager.get_player_list():
+            if player.get_job().group == 'werewolf':
+                await self.textChannelManager.add_role_to_channel(self.jinro_channel, player.role)
             channel = await self.textChannelManager.create_private_channel(player_name=player.name)
+            await channel.edit(category=category)
             player.set_channel(channel)
     
     def assign_jobs(self):

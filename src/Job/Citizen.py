@@ -19,7 +19,7 @@ class Citizen(Job):
         return text, err
     
     def request_action(self):
-        text = '人狼だと思うプレイヤーを`/action`で選択してください。\n'
+        text = '人狼だと思うプレイヤー(生存者)を`/action`で選択してください。\n'
         return text
     
     def description_action(self):

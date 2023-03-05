@@ -1,3 +1,5 @@
+import discord
+from discord.utils import get
 from Player.Player import Player
 from Job.Job import Job
 
@@ -10,7 +12,7 @@ class PlayerManager():
             return True
         return False
     # プレイヤーをゲームに登録する
-    def register_player(self, name:str, id:int, err=None) -> tuple:
+    def register_player(self, name:str, id:int, role:discord.Role,err=None) -> tuple:
         text = name+"さんはもうすでにゲームに参加しています。"
         if self.is_joined_game(id=id):
             print("player ",name," has already joined")
@@ -18,7 +20,7 @@ class PlayerManager():
             return text, err
         text = name+"さんがゲームに参加しました。"
         player_name = 'player-'+name
-        player = Player(player_name, id)
+        player = Player(name=player_name,id=id,role=role)
         self.player_dict[id] = player
         print("PlayerManager:", self.player_dict)
         return text, err
@@ -28,7 +30,7 @@ class PlayerManager():
         text = name+"さんはゲームに参加していません。`/join` コマンドで参加することができます"
         if not self.is_joined_game(id=id):
             print("player",name,"don't join the game")
-            error = 'error'
+            err = 'error'
             return text, err
         text = name+"さんがゲームから退出しました"
         print("PlayerManager:", self.player_dict)
@@ -47,14 +49,30 @@ class PlayerManager():
         return ret
 
     # プレイヤーリストをテキスト化
-    def get_players_display(self):
+    def get_players_display(self) -> str:
         text = ''
         if not self.player_dict:
             text = ''
         else:
-            plist = '>\n<@!'.join([
-                str(user_id)
-                for user_id in self.player_dict.keys()
-            ])
-            text += '<@{}>'.format(plist)
+            for user_id in self.player_dict.keys():
+                text += f'<@{user_id}> '
         return text
+    
+    # 生存者(犠牲者)リストをテキスト化
+    def get_alive_display(self, is_alive:bool, my_job:Job) -> tuple:
+        count = 0
+        check_alive = lambda x : '生存者' if x else '犠牲者'
+        job_group = lambda x : '市民' if x == 'citizen' else '人狼'
+        title = check_alive(is_alive)
+        text = ''
+        for player in self.player_dict.values():
+            if player.get_is_alive() == is_alive:
+                text += f'<@&{player.role.id}>'
+                if my_job.job_name == 'seer' and player.is_reveal_seer:
+                    text += f'({job_group(player.job.group)})'
+                elif my_job.job_name == 'medium' and player.is_reveal_medium:
+                    text += f'({job_group(player.job.group)})'
+                text += '\n'
+                count += 1
+        title = f'{title} {count}人'
+        return title, text

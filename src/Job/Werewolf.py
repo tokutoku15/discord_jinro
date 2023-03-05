@@ -6,7 +6,7 @@ class Werewolf(Job):
         super().__init__(
             job_name='werewolf',
             job_display_name='人狼',
-            is_werewolf=True
+            group='werewolf'
         )
     
     def action(self, target:Player, err=None):
@@ -14,8 +14,12 @@ class Werewolf(Job):
         if not target.get_is_alive():
             text = '死亡者を選択することはできません'
             err = 'error'
-        else:
-            text = '{target}を襲撃対象にしました。\n' \
+            return text, err
+        if target.get_job().group == self.group:
+            text = '仲間の人狼を選択することはできません'
+            err = 'error'
+            return text, err
+        text = '{target}を襲撃対象にしました。\n' \
                    .format(target=target.get_name())
         return text, err
     
