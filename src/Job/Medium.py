@@ -23,7 +23,7 @@ class Medium(Job):
         text = '{target}を占いました。\n' \
                 '{target}は{group}です。' \
                 .format(target=target.get_name(),
-                        group=is_werewolf(target.job.group))
+                        group=is_werewolf(target.get_job().group))
         return text, err
     
     def request_action(self):

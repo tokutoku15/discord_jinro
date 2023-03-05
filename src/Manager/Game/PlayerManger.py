@@ -72,9 +72,9 @@ class PlayerManager():
             if player.get_is_alive() == is_alive:
                 text += f'<@&{player.role.id}>'
                 if my_job.job_name == 'seer' and player.is_reveal_seer:
-                    text += f'({job_group(player.job.group)})'
+                    text += f'({job_group(player.get_job().group)})'
                 elif my_job.job_name == 'medium' and player.is_reveal_medium:
-                    text += f'({job_group(player.job.group)})'
+                    text += f'({job_group(player.get_job().group)})'
                 text += '\n'
                 count += 1
         title = f'{title} {count}人'

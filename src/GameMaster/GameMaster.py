@@ -53,7 +53,7 @@ class GameMaster():
     
     async def send_request_action(self):
         for player in self.playerManager.get_player_list():
-            my_job = player.job
+            my_job = player.get_job()
             alive_title, alive_text = self.playerManager.get_alive_display(is_alive=True, my_job=my_job)
             victim_title, victim_text = self.playerManager.get_alive_display(is_alive=False, my_job=my_job)
             embed = discord.Embed(title="アクションの実行", description="temp", color=self.colors['night'])
@@ -68,7 +68,7 @@ class GameMaster():
     
     async def accept_action(self, ctx:discord.Interaction, target:Player):
         player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
-        text, err = player.job.action(player, target)
+        text, err = player.get_job().action(player, target)
         if err:
             await ctx.response.send_message(text)
             return
