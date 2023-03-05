@@ -17,7 +17,7 @@ class GameRuleManager():
                 '/stop' : 'Botの終了・停止',
             },
             'game' : {
-                '/ability' : '役職の能力を使う',
+                '/action' : '役職の能力を使う',
                 '/vote' : 'プレイヤーへの投票',
             },
             'game_setting' : {

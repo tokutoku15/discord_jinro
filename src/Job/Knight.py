@@ -8,7 +8,7 @@ class Knight(Job):
             job_display_name='騎士'
         )
     
-    def ability(self, target:Player, err=None):
+    def action(self, target:Player, err=None):
         text = ''
         if not target.get_is_alive():
             text = '死亡者を選択することはできません'
@@ -18,9 +18,9 @@ class Knight(Job):
                    .format(target=target.get_name())
         return text, err
     
-    def request_ability(self):
-        text = '人狼から守るプレイヤー(生存者)を`/ability`で選択してください。\n'
+    def request_action(self):
+        text = '人狼から守るプレイヤー(生存者)を`/action`で選択してください。\n'
         return text
 
-    def description_ability(self):
-        text = '役割は人狼の襲撃からプレイヤーを守ることです。'
+    def description_action(self):
+        text = '目的は人狼の襲撃からプレイヤーを守ることです。'

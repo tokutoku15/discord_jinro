@@ -5,7 +5,6 @@ class Player():
     def __init__(self, name:str, id:int):
         self.name = name
         self.id = id
-        self.is_alive = True
         self.job = None
         self.my_channel = None
 

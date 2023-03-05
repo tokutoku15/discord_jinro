@@ -142,12 +142,12 @@ async def start(ctx:discord.Interaction):
 async def stop(ctx:discord.Interaction):
     await cmdHandler.stop(ctx=ctx)
 
-@tree.command(name='ability', description='役職の能力を使う(ゲーム中)')
+@tree.command(name='action', description='役職の能力を使う(ゲーム中)')
 @discord.app_commands.describe(text="能力の使用対象 ex. @player-{hogehoge}")
 @discord.app_commands.rename(text='player')
 @discord.app_commands.guild_only()
-async def ability(ctx:discord.Interaction, text:str):
-    await cmdHandler.ability(ctx=ctx, target=text)
+async def action(ctx:discord.Interaction, text:str):
+    await cmdHandler.action(ctx=ctx, target=text)
 
 @tree.command(name='vote', description='処刑するプレイヤーに投票する(ゲーム中)')
 @discord.app_commands.describe(text="投票の対象 ex. @player-{hogehoge}")

@@ -9,7 +9,7 @@ class Werewolf(Job):
             is_werewolf=True
         )
     
-    def ability(self, target:Player, err=None):
+    def action(self, target:Player, err=None):
         text = ''
         if not target.get_is_alive():
             text = '死亡者を選択することはできません'
@@ -19,10 +19,10 @@ class Werewolf(Job):
                    .format(target=target.get_name())
         return text, err
     
-    def request_ability(self):
-        text = '襲撃するプレイヤー(生存者)を`/ability`で選択してください。\n'
+    def request_action(self):
+        text = '襲撃するプレイヤー(生存者)を`/action`で選択してください。\n'
         return text
     
-    def description_ability(self):
-        text = '役割は市民を襲撃して人狼陣営が勝つことです。市民に正体を見破られてはいけません。'
+    def description_action(self):
+        text = '目的は市民を襲撃して人狼陣営が勝つことです。市民に正体を見破られてはいけません。'
         return text

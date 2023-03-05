@@ -8,7 +8,7 @@ class Seer(Job):
             job_display_name='占い師'
         )
     
-    def ability(self, target:Player, err=None):
+    def action(self, target:Player, err=None):
         text = ''
         check_werewolf = lambda x : '人狼' if x else '市民'
         if not target.get_is_alive():
@@ -21,10 +21,10 @@ class Seer(Job):
                            is_werewolf=check_werewolf(target.job.is_werewolf()))
         return text, err
     
-    def request_ability(self):
-        text ='占うプレイヤー(生存者)を`/ability`で選択してください。\n'
+    def request_action(self):
+        text ='占うプレイヤー(生存者)を`/action`で選択してください。\n'
         return text
     
-    def description_ability(self):
-        text = '役割は生存しているプレイヤーを人狼かどうか占うことです。'
+    def description_action(self):
+        text = '目的は生存しているプレイヤーを人狼かどうか占うことです。'
         return text

@@ -24,11 +24,11 @@ class Job(metaclass=ABCMeta):
         return self.emoji
 
     @abstractmethod
-    def ability(self):
+    def action(self):
         raise NotImplementedError
     @abstractmethod
-    def request_ability(self):
+    def request_action(self):
         raise NotImplementedError
     @abstractmethod
-    def description_ability(self):
+    def description_action(self):
         raise NotImplementedError

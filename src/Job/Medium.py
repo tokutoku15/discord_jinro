@@ -8,7 +8,7 @@ class Medium(Job):
             job_display_name='霊媒師'
         )
     
-    def ability(self, target:Player, err=None):
+    def action(self, target:Player, err=None):
         text = ''
         if target.get_is_alive():
             text = '生存者を選択することはできません'
@@ -18,9 +18,9 @@ class Medium(Job):
                    .format(target=target.get_name())
         return text, err
     
-    def request_ability(self):
-        text = '占うプレイヤー(死亡者)を`/ability`で選択してください。\n'
+    def request_action(self):
+        text = '占うプレイヤー(死亡者)を`/action`で選択してください。\n'
         return text
     
-    def description_ability(self):
-        text = '役割は死亡したプレイヤーが人狼かどうかを占うことです。'
+    def description_action(self):
+        text = '目的は死亡したプレイヤーが人狼かどうかを占うことです。'

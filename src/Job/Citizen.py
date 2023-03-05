@@ -8,7 +8,7 @@ class Citizen(Job):
             job_display_name='市民'
         )
     
-    def ability(self, target:Player, err=None):
+    def action(self, target:Player, err=None):
         text = ''
         if not target.get_is_alive():
             text = '死亡者を選択することはできません'
@@ -18,10 +18,10 @@ class Citizen(Job):
                    .format(target=target.get_name())
         return text, err
     
-    def request_ability(self):
-        text = '人狼だと思うプレイヤーを`/ability`で選択してください。\n'
+    def request_action(self):
+        text = '人狼だと思うプレイヤーを`/action`で選択してください。\n'
         return text
     
-    def description_ability(self):
-        text = '役割は人狼を処刑して市民陣営が勝つことです。'
+    def description_action(self):
+        text = '目的は人狼を処刑して市民陣営が勝つことです。'
         return text

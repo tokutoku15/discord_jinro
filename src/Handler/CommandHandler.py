@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from Manager.Discord.RoleManager import RoleManager
 from Manager.Discord.TextChannelManager import TextChannelManager
 from Manager.Discord.EmojiManager import EmojiManager
@@ -212,9 +213,9 @@ class CommandHandler():
     
     async def help(self, ctx:discord.Interaction):
         text = 'ゲーム設定コマンドを表示します'
-        await ctx.response.send_message(text)
+        await ctx.response.send_message(text, ephemeral=True)
         embed = self.gameRuleManager.help_command_Embed()
-        await self.lobby_channel.send(embed=embed)
+        await ctx.followup.send(embed=embed, ephemeral=True)
 
     async def start(self, ctx:discord.Interaction):
         if not await self.is_lobby_channel(ctx):
@@ -231,6 +232,8 @@ class CommandHandler():
         self.assign_jobs()
         await self.make_private_channels()
         await self.GM.send_players_job()
+        await asyncio.sleep(3)
+        await self.GM.send_night_phase(ctx)
 
     async def stop(self, ctx:discord.Interaction):
         if not await self.is_lobby_channel(ctx):
@@ -245,7 +248,7 @@ class CommandHandler():
         text = 'ゲームを終了し、Botを停止します。おやすみなさい。'
         await ctx.response.send_message(text)
 
-    async def ability(self, ctx:discord.Interaction, target:str):
+    async def action(self, ctx:discord.Interaction, target:str):
         pass
 
     async def vote(self, ctx:discord.Interaction, target:str):
