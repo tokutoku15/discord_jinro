@@ -7,7 +7,8 @@ class GameRuleManager():
     def __init__(self):
         self.one_night_kill = False
         self.one_night_seer = False
-        self.discuss_time = 5
+        self.setting_discuss_time = 300
+        self.discuss_time = self.setting_discuss_time
         self.commands = {
             'bot' : {
                 '/run' : 'Botの起動・ゲームの設定の開始',
@@ -36,7 +37,7 @@ class GameRuleManager():
             .format(check_mark(self.one_night_seer), check_mark(not self.one_night_seer))
         embed.add_field(name='第一夜の襲撃', value=one_night_kill)
         embed.add_field(name='第一夜の占い', value=one_night_seer)
-        time = '{}分'.format(self.discuss_time)
+        time = '{}分'.format(self.discuss_time//60)
         embed.add_field(name='話し合いの時間', value=time, inline=True)
         job_num_text = jobManager.get_display_list()
         citizen, werewolf = jobManager.get_group_count()
@@ -67,3 +68,15 @@ class GameRuleManager():
     
     def set_one_night_seer(self, onoff:bool):
         self.one_night_seer = onoff
+    
+    def add_time(self, time:int):
+        self.discuss_time += time
+    
+    def get_time(self):
+        return self.discuss_time
+    
+    def set_time(self, time:int):
+        self.discuss_time = time
+    
+    def reset_time(self):
+        self.discuss_time = self.setting_discuss_time

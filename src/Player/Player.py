@@ -13,6 +13,7 @@ class Player():
         self.is_reveal_medium = False
         self.is_protected = False
         self.will_be_killed = False
+        self.has_acted = False
         self.vote_count = 0
 
     def __str__(self):
@@ -49,9 +50,12 @@ class Player():
         self.will_be_killed = True
     def get_kill(self):
         return self.will_be_killed
+    def acted(self):
+        self.has_acted = True
     def reset_flags(self):
         self.is_protected = False
         self.will_be_killed = False
+        self.has_acted = False
         self.vote_count = 0
     # 人狼に襲撃されたらTrue, そうでなければFalse
     def kill(self) -> bool:

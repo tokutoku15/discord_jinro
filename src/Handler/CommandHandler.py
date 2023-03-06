@@ -95,6 +95,8 @@ class CommandHandler():
         if not await self.is_game_ready(ctx):
             return
         await ctx.response.defer()
+        text = 'botを起動します。おはようございます。\nこれからゲームの設定を始めます。'
+        await ctx.followup.send(text)
         self.gameStateManager.active_bot()
         if self.voice_channel.members:
             member_num = len(self.voice_channel.members)
@@ -103,8 +105,6 @@ class CommandHandler():
             for member in self.voice_channel.members:
                 role = await self.roleManager.assign_role(member)
                 self.playerManager.register_player(member.display_name, member.id, role)
-        text = 'botを起動します。おはようございます。\nこれからゲームの設定を始めます。'
-        await ctx.followup.send(text)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
         print(self.menu_message)
@@ -150,7 +150,7 @@ class CommandHandler():
             return
         if not await self.is_game_ready(ctx):
             return
-        ctx.response.defer(thinking=False)
+        await ctx.response.defer(thinking=False)
         text = '役職の数を変更しました'
         await ctx.followup.send(text)
         self.jobManager.set_job_num(name, num)
@@ -215,6 +215,10 @@ class CommandHandler():
             await ctx.response.send_message(text, ephemeral=True)
             return
         s_player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
+        if s_player.has_acted:
+            text = 'もうアクションは終えています。他のプレイヤーのアクションが終わるまでお待ちください。'
+            await ctx.response.send_message(text)
+            return
         if not s_player.get_is_alive():
             text = '犠牲者はアクションできません。ゲームが終了するまでお待ちください。'
             await ctx.response.send_message(text)
@@ -225,6 +229,7 @@ class CommandHandler():
             text = 'プレイヤーを選択してください ex. 「@player-ほげほげ」'
             await ctx.response.send_message(text)
             return
+        await ctx.response.defer()
         await self.GM.accept_action(ctx=ctx, target=t_player)
     
     async def vote(self, ctx:discord.Interaction, target:str):

@@ -30,3 +30,4 @@ class Knight(Job):
 
     def description_action(self):
         text = '目的は人狼の襲撃からプレイヤーを守ることです。'
+        return text
