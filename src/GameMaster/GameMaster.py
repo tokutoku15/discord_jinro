@@ -29,6 +29,7 @@ class GameMaster():
                 'citizen' : 0xfffafa,
                 'werewolf' : 0xdc143c,
             },
+            'judgement' : 0xdc143c,
             'now' : 0x3c14dc,
         }
         self.vote_count = 0
@@ -36,13 +37,13 @@ class GameMaster():
     def register_lobby_channel(self, channel:discord.TextChannel):
         self.lobby_channel = channel
 
-    async def send_night_phase(self, ctx:discord.Interaction):
+    async def send_night_phase(self):
         title = f'### {self.gameStateManager.day}日目の夜 ###'
         text = '恐ろしい夜がやってきました。これから夜のアクションを始めます。\n' \
                '**「player-」**から始まるプライベートチャンネルでアクションを実行してください。'
         color = self.colors['night']
         embed = discord.Embed(title=title, description=text, color=color)
-        await ctx.channel.send(embed=embed)
+        await self.lobby_channel.send(embed=embed)
         await self.send_request_action()
     
     async def send_players_job(self):
@@ -81,28 +82,26 @@ class GameMaster():
             embed.description=request_text
             await player.get_channel().send(embed=embed)
     
-    async def accept_action(self, ctx:discord.Interaction, target:Player, err=None):
+    async def accept_action(self, ctx:discord.Interaction, source:Player,target:Player, err=None):
         text = ''
-        player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
         if self.gameStateManager.day == 1:
-            if player.get_job().job_name == 'medium':
-                text, err = Citizen().action(player, target)
-            elif player.get_job().job_name == 'seer' and not self.gameRuleManager.one_night_seer:
-                text, err = Citizen().action(player, target)
-            elif player.get_job().job_name == 'werewolf' and not self.gameRuleManager.one_night_kill:
-                text, err = Citizen().action(player, target)
+            if source.get_job().job_name == 'medium':
+                text, err = Citizen().action(source, target)
+            elif source.get_job().job_name == 'seer' and not self.gameRuleManager.one_night_seer:
+                text, err = Citizen().action(source, target)
+            elif source.get_job().job_name == 'werewolf' and not self.gameRuleManager.one_night_kill:
+                text, err = Citizen().action(source, target)
             else:
-                text, err = player.get_job().action(player, target)
+                text, err = source.get_job().action(source, target)
             if err:
                 await ctx.followup.send(text)
                 return
-            player.acted()
         else:
-            text, err = player.get_job().action(player, target)
+            text, err = source.get_job().action(source, target)
         if err:
             await ctx.followup.send(text)
             return
-        player.acted()
+        source.acted()
         self.vote_count += 1
         await ctx.followup.send(text)
         print(self.vote_count, self.playerManager.get_alive_player_count())
@@ -144,13 +143,63 @@ class GameMaster():
         print('discuss_phase')
         await self.display_time_remaining()
     
-    async def vote_phase(self):
-        text = '投票の時間です'
-        await self.lobby_channel.send(text)
+    async def send_vote_phase(self):
+        title = "#### 投票の時間 ####"
+        text = '話し合いは終了です。\n陽は暮れて、今日も一人容疑者を処刑する時間が訪れました。\n\n' \
+                '**「player-」**から始まるプライベートチャンネルで投票を行なってください。'
+        embed = discord.Embed(title=title, description=text, color=self.colors['vote'])
+        await self.lobby_channel.send(embed=embed)
+        self.gameStateManager.next_phase()
+        await self.send_request_vote()
+        
+    async def send_request_vote(self):
+        title = '投票の実行'
+        text = '処刑するプレイヤー(生存者)に**/vote**コマンドで投票してください。'
+        embed = discord.Embed(title=title, description=text, color=self.colors['vote'])
+        alive_title, alive_text = self.playerManager.get_alive_display(True, Citizen())
+        embed.add_field(name=alive_title, value=alive_text)
+        for player in self.playerManager.get_player_list():
+            if player.get_is_alive():
+                await player.get_channel().send(embed=embed)
+    
+    async def accept_vote(self, ctx:discord.Interaction):
+        self.vote_count += 1
+        if self.vote_count == self.playerManager.get_alive_player_count():
+            await self.lobby_channel.send('全員の投票が終了しました。')
+            await self.send_judgement()
+    
+    async def send_judgement(self):
+        self.vote_count = 0
+        title = '#### 処刑の時間 ####'
+        text = '投票が終わり、処刑の時間がやってきました。処刑されるプレイヤーは・・・\n'
+        if len(self.playerManager.judgement()) == 1:
+            player = self.playerManager.judgement()[0]
+            text += f'> {player}\nです。{player}はゲームが終わるまでゲームの内容について話すことができません。'
+            player.be_victim()
+            self.playerManager.reset_players_flags()
+            embed = discord.Embed(title=title, description=text, color=self.colors['judgement'])
+            await self.lobby_channel.send(embed=embed)
+            self.gameStateManager.next_phase()
+            self.gameStateManager.next_day()
+            await self.send_night_phase()
+            return
+        else:
+            for player in self.playerManager.judgement():
+                text += f'> {player}\n'
+            text += 'です。\n最多票が複数名いたので決選投票を行います。\n'\
+                    'プライベートチャンネルで決選投票をしてください。'
+            embed = discord.Embed(title=title, description=text, color=self.colors['vote'])
+            await self.lobby_channel.send(embed=embed)
+            self.playerManager.reset_players_flags()
+            title, text = self.playerManager.get_judgement_display()
+            embed = discord.Embed(title=title, description=text, color=self.colors['vote'])
+            for player in self.playerManager.get_player_list():
+                if player.get_is_alive():
+                    await player.get_channel().send(embed=embed)
+
 
     # 時間待機をするプログラム
     async def display_time_remaining(self):
-        self.gameStateManager.next_phase()
         view = discord.ui.View()
         view.add_item(self.PlusButton(gameRuleManager=self.gameRuleManager))
         view.add_item(self.StopButton(gameRuleManager=self.gameRuleManager))
@@ -158,7 +207,7 @@ class GameMaster():
         minute = self.gameRuleManager.discuss_time // 60
         second = self.gameRuleManager.discuss_time % 60
         text = '**{:02d}分{:02d}秒**'.format(minute, second)
-        embed = discord.Embed(title='#### 話し合い時間 ####', description=text, color=self.colors['discuss'])
+        embed = discord.Embed(title='#### 話し合いの時間 ####', description=text, color=self.colors['discuss'])
         mes = await self.lobby_channel.send(embed=embed, view=view)
         print(mes)
         while self.gameRuleManager.discuss_time > 0:
@@ -170,7 +219,8 @@ class GameMaster():
             await asyncio.sleep(1)
             await mes.edit(embed=embed)
         self.gameStateManager.next_phase()
-        await self.vote_phase()
+        self.gameRuleManager.reset_time()
+        await self.send_vote_phase()
     
     class PlusButton(discord.ui.Button):
         def __init__(self, *, 

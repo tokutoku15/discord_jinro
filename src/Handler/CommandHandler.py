@@ -181,7 +181,7 @@ class CommandHandler():
         await self.make_private_channels()
         await self.GM.send_players_job()
         # await asyncio.sleep(3)
-        await self.GM.send_night_phase(ctx)
+        await self.GM.send_night_phase()
 
     async def stop(self, ctx:discord.Interaction):
         if not await self.is_lobby_channel(ctx):
@@ -230,10 +230,49 @@ class CommandHandler():
             await ctx.response.send_message(text)
             return
         await ctx.response.defer()
-        await self.GM.accept_action(ctx=ctx, target=t_player)
+        await self.GM.accept_action(ctx=ctx, source=s_player,target=t_player)
     
     async def vote(self, ctx:discord.Interaction, target:str):
-        pass
+        text = ''
+        if not self.textChannelManager.is_private_channel(ctx.channel):
+            text = 'プライベートチャンネルで実行してください'
+            await ctx.response.send_message(text, ephemeral=True)
+            return
+        if not await self.is_bot_active(ctx):
+            return
+        if not self.gameStateManager.get_is_game_start():
+            text = 'ゲームは始まっていません\n**/start**コマンドでゲームを始めてください。'
+            await ctx.response.send_message(text, ephemeral=True)
+            return
+        if self.gameStateManager.get_now_phase() != 'vote':
+            text = '今は投票できません。投票の時間に実行してください。'
+            await ctx.response.send_message(text, ephemeral=True)
+            return
+        s_player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
+        if s_player.has_acted:
+            text = 'もう投票は終えています。他のプレイヤーの投票が終わるまでお待ちください。'
+            await ctx.response.send_message(text)
+            return
+        if not s_player.get_is_alive():
+            text = '犠牲者は投票できません。ゲームが終了するまでお待ちください。'
+            await ctx.response.send_message(text)
+            return
+        # @ロール名 で送信すると <@&{ROLE_ID}> になる
+        t_player = self.playerManager.get_player_from_role(name=target)
+        if t_player is None:
+            text = 'プレイヤーを選択してください ex. 「@player-ほげほげ」'
+            await ctx.response.send_message(text)
+            return
+        await ctx.response.defer()
+        if s_player == t_player:
+            text = '自分に投票はできません。他のプレイヤーに投票してください。'
+            await ctx.followup.send(text)
+            return
+        text = f'{t_player}に投票しました'
+        await ctx.followup.send(text)
+        t_player.vote()
+        s_player.acted()
+        await self.GM.accept_vote(ctx)
 
     async def is_lobby_channel(self, ctx:discord.Interaction) -> bool:
         if self.lobby_channel != ctx.channel:

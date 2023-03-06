@@ -120,6 +120,26 @@ class PlayerManager():
             ret['doubt'] = doubt_players
         return ret
     
+    def judgement(self) -> list:
+        max_vote = 0
+        self.judgement_players = []
+        for player in self.player_dict.values():
+            if max_vote < player.vote_count:
+                max_vote = player.vote_count
+                self.judgement_players.clear()
+                self.judgement_players.append(player)
+            elif max_vote == player.vote_count:
+                self.judgement_players.append(player)
+        return self.judgement_players
+
+    #決選投票用の表示
+    def get_judgement_display(self) -> tuple:
+        title = '最多票のプレイヤー'
+        text = ''
+        for player in self.judgement_players:
+            text += f'<@&{player.role.id}>\n'
+        return title, text
+    
     def reset_players_flags(self):
         for player in self.player_dict.values():
             player.reset_flags()
