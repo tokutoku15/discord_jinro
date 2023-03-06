@@ -52,12 +52,13 @@ class CommandHandler():
             return
         if not await self.is_game_ready(ctx):
             return
+        ctx.response.defer()
         role = await self.roleManager.assign_role(ctx.user)
         text, err  = self.playerManager.register_player(ctx.user.name, ctx.user.id, role)
         if err:
-            await ctx.response.send_message(text, ephemeral=True)
+            await ctx.followup.send(text, ephemeral=True)
             return
-        await ctx.response.send_message(text)
+        await ctx.followup.send(text)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         print(self.menu_message)
         await self.menu_message.delete()
@@ -76,8 +77,9 @@ class CommandHandler():
         if err:
             await ctx.response.send_message(text, ephemeral=True)
             return
+        await ctx.response.defer(thinking=False)
         await self.roleManager.delete_role(ctx.user.name)
-        await ctx.response.send_message(text)
+        await ctx.followup.send(text)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         print(self.menu_message)
         await self.menu_message.delete()
@@ -92,6 +94,7 @@ class CommandHandler():
             return
         if not await self.is_game_ready(ctx):
             return
+        await ctx.response.defer()
         self.gameStateManager.active_bot()
         if self.voice_channel.members:
             member_num = len(self.voice_channel.members)
@@ -101,7 +104,7 @@ class CommandHandler():
                 role = await self.roleManager.assign_role(member)
                 self.playerManager.register_player(member.display_name, member.id, role)
         text = 'botを起動します。おはようございます。\nこれからゲームの設定を始めます。'
-        await ctx.response.send_message(text)
+        await ctx.followup.send(text)
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
         self.menu_message = await self.lobby_channel.send(embed=embed)
         print(self.menu_message)
@@ -147,8 +150,9 @@ class CommandHandler():
             return
         if not await self.is_game_ready(ctx):
             return
+        ctx.response.defer(thinking=False)
         text = '役職の数を変更しました'
-        await ctx.response.send_message(text)
+        await ctx.followup.send(text)
         self.jobManager.set_job_num(name, num)
         await self.menu_message.delete()
         embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
@@ -169,9 +173,10 @@ class CommandHandler():
             return
         if not await self.is_ok_job_count(ctx):
             return
+        await ctx.response.defer(thinking=False)
         self.gameStateManager.game_start()
         text = 'ゲームを始めます。'
-        await ctx.response.send_message(text)
+        await ctx.followup.send(text)
         self.assign_jobs()
         await self.make_private_channels()
         await self.GM.send_players_job()
@@ -183,6 +188,7 @@ class CommandHandler():
             return
         if not await self.is_bot_active(ctx):
             return
+        await ctx.response.defer()
         self.playerManager.__init__()
         self.jobManager.__init__()
         self.gameStateManager.game_stop()
@@ -191,7 +197,7 @@ class CommandHandler():
         if self.menu_message:
             await self.menu_message.delete()
         text = 'ゲームを終了し、Botを停止します。おやすみなさい。'
-        await ctx.response.send_message(text)
+        await ctx.followup.send(text)
 
     async def action(self, ctx:discord.Interaction, target:str):
         if not self.textChannelManager.is_private_channel(ctx.channel):
@@ -201,10 +207,10 @@ class CommandHandler():
         if not await self.is_bot_active(ctx):
             return
         if not self.gameStateManager.get_is_game_start():
-            text = 'ゲームは始まっていません\n`/start`コマンドでゲームを始めてください。'
+            text = 'ゲームは始まっていません\n**/start**コマンドでゲームを始めてください。'
             await ctx.response.send_message(text, ephemeral=True)
             return
-        if self.gameStateManager.now_phase() != 'night':
+        if self.gameStateManager.get_now_phase() != 'night':
             text = '今はアクションが実行できません。夜の時間に実行してください。'
             await ctx.response.send_message(text, ephemeral=True)
             return
@@ -233,7 +239,7 @@ class CommandHandler():
     
     async def is_bot_active(self, ctx:discord.Interaction) -> bool:
         if not self.gameStateManager.get_is_bot_active():
-            text = 'botは休止中です。`/run`コマンドで起こしてください。'
+            text = 'botは休止中です。**/run**コマンドで起こしてください。'
             await ctx.response.send_message(text, ephemeral=True)
             return False
         return True

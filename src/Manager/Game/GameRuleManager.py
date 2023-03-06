@@ -23,11 +23,7 @@ class GameRuleManager():
             'game_setting' : {
                 '/onenightkill' : '第一夜の襲撃の設定',
                 '/onenightseer' : '第一夜の占いの設定',
-                '/citizen' : '市民の数の設定',
-                '/werewolf' : '人狼の数の設定',
-                '/knight' : '騎士の数の設定(max 1)',
-                '/seer' : '占い師の数の設定(max 1)',
-                'medium' : '霊媒師の数の設定(max 1)',
+                '/job'          : '役職の人数の設定',
             }
         }
 
@@ -53,15 +49,15 @@ class GameRuleManager():
     def help_command_Embed(self):
         embed = discord.Embed(title='コマンド一覧')
         bot_commands = '\n'.join([
-            '`{}` : {}'.format(cmd, des) for cmd, des in self.commands['bot'].items()
+            '**{}** : {}'.format(cmd, des) for cmd, des in self.commands['bot'].items()
         ])
         embed.add_field(name='Botコマンド', value=bot_commands, inline=True)
         game_commands = '\n'.join([
-            '`{}` : {}'.format(cmd, des) for cmd, des in self.commands['game'].items()
+            '**{}** : {}'.format(cmd, des) for cmd, des in self.commands['game'].items()
         ])
         embed.add_field(name='ゲームコマンド', value=game_commands, inline=True)
         game_setting_commands = '\n'.join([
-            '`{}` : {}'.format(cmd, des) for cmd, des in self.commands['game_setting'].items()
+            '**{}** : {}'.format(cmd, des) for cmd, des in self.commands['game_setting'].items()
         ])
         embed.add_field(name='ゲーム設定コマンド', value=game_setting_commands, inline=False)
         return embed

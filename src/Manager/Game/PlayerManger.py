@@ -30,7 +30,7 @@ class PlayerManager():
     
     # プレイヤーをゲームから削除する
     def remove_player(self, name:str, id:int, err=None) -> tuple:
-        text = name+"さんはゲームに参加していません。`/join` コマンドで参加することができます"
+        text = name+"さんはゲームに参加していません。**/join** コマンドで参加することができます"
         if not self.is_joined_game(id=id):
             print("player",name,"don't join the game")
             err = 'error'
@@ -99,3 +99,27 @@ class PlayerManager():
             if role_id == player.role.id:
                 return player
         return None
+    
+    def night_action(self) -> dict:
+        max_vote = 0
+        kill_players = []
+        doubt_players = []
+        ret = {}
+        for player in self.player_dict.values():
+            if player.kill():
+                kill_players.append(player)
+            if max_vote < player.vote_count:
+                max_vote = player.vote_count
+                doubt_players.clear()
+                doubt_players.append(player)
+            elif max_vote == player.vote_count:
+                doubt_players.append(player)
+        if kill_players:
+            ret['kill'] = kill_players
+        if doubt_players:
+            ret['doubt'] = doubt_players
+        return ret
+    
+    def reset_players_flags(self):
+        for player in self.player_dict.values():
+            player.reset_flags()

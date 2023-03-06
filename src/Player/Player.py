@@ -41,8 +41,6 @@ class Player():
         return self.is_reveal_medium
     def vote(self):
         self.vote_count += 1
-    def reset_vote(self):
-        self.vote_count = 0
     def protect(self):
         self.is_protected = True
     def get_protect(self):
@@ -50,7 +48,7 @@ class Player():
     def will_kill(self):
         self.will_be_killed = True
     def get_kill(self):
-        self.will_be_killed = True
+        return self.will_be_killed
     def reset_flags(self):
         self.is_protected = False
         self.will_be_killed = False

@@ -28,7 +28,7 @@ class JobManager():
         text = ''
         for k, v in self.job_num_dict.items():
             print(str(v[0]), v[1])
-            text += '{} : `{}`人'.format(v[0],v[1])
+            text += '{} : **{}**人'.format(v[0],v[1])
             if k in self.max_limited_job:
                 text += '(max 1)'
             text += '\n'

@@ -80,6 +80,7 @@ class GameMaster():
             await player.get_channel().send(embed=embed)
     
     async def accept_action(self, ctx:discord.Interaction, target:Player, err=None):
+        text = ''
         player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
         if self.gameStateManager.day == 1:
             if player.get_job().job_name == 'medium':
@@ -88,6 +89,11 @@ class GameMaster():
                 text, err = Citizen().action(player, target)
             elif player.get_job().job_name == 'werewolf' and not self.gameRuleManager.one_night_kill:
                 text, err = Citizen().action(player, target)
+            else:
+                text, err = player.get_job().action(player, target)
+            if err:
+                await ctx.response.send_message(text)
+                return
         else:
             text, err = player.get_job().action(player, target)
         if err:
@@ -97,4 +103,29 @@ class GameMaster():
         await ctx.response.send_message(text)
         print(self.vote_count, self.playerManager.get_alive_player_count())
         if self.vote_count == self.playerManager.get_alive_player_count():
+            self.vote_count = 0
             await self.lobby_channel.send(content='全員のアクションが終了しました。')
+            await self.send_morning_phase()
+    
+    async def send_morning_phase(self):
+        self.gameStateManager.next_day()
+        self.gameStateManager.next_phase()
+        title = f'### {self.gameStateManager.day}日目の朝 ###'
+        text = '夜が明けました。昨晩襲撃されたプレイヤーは\n'
+        players_dict = self.playerManager.night_action()
+        try:
+            if len(players_dict["kill"]) == 1:
+                player = players_dict["kill"][0]
+                text += f'<@&{player.role.id}>です。\n\n'
+        except:
+            text += 'いませんでした！人狼は襲撃に失敗したようです。\n\n'
+        text += 'そして新たに人狼と疑われているプレイヤーは\n'
+        try:
+            if len(players_dict["doubt"]) >= 1:
+                for player in players_dict["doubt"]:
+                    text += f'<@&{player.role.id}>さん\n'
+                text += 'です。'
+        except:
+            text += 'いませんでした！'
+        embed = discord.Embed(title=title, description=text, color=self.colors['morning'])
+        await self.lobby_channel.send(embed=embed)

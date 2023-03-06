@@ -10,14 +10,14 @@ class GameStateManager():
             3  : 'vote',
         }
         self.day = 1
-        self.now_phase = 20
+        self.now_phase = 0
     
     def game_end(self):
         self.now_phase = 10
     def next_phase(self):
         self.now_phase += 1
         self.now_phase %= 4
-    def get_now_state(self) -> str:
+    def get_now_phase(self) -> str:
         return self.game_phase[self.now_phase]
     def next_day(self):
         self.day += 1
