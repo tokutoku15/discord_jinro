@@ -52,7 +52,7 @@ class CommandHandler():
             return
         if not await self.is_game_ready(ctx):
             return
-        ctx.response.defer()
+        await ctx.response.defer()
         role = await self.roleManager.assign_role(ctx.user)
         text, err  = self.playerManager.register_player(ctx.user.name, ctx.user.id, role)
         if err:
