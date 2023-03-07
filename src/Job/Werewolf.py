@@ -6,16 +6,17 @@ class Werewolf(Job):
         super().__init__(
             job_name='werewolf',
             job_display_name='人狼',
+            appear_group='werewolf',
             group='werewolf'
         )
     
-    def action(self, source:Player, target:Player, err=None):
+    def action(self, source:Player, target:Player, err=None) -> tuple:
         text = ''
-        if not target.get_is_alive():
+        if not target.is_alive:
             text = '死亡者を選択することはできません'
             err = 'error'
             return text, err
-        if target.get_job().group == self.group:
+        if target.job.appear_group == self.appear_group:
             text = '仲間の人狼を選択することはできません'
             err = 'error'
             return text, err
@@ -24,8 +25,7 @@ class Werewolf(Job):
             err = 'error'
             return text, err
         target.will_kill()
-        text = '{target}を襲撃対象にしました。\n' \
-                   .format(target=target.get_name())
+        text = f'{target}を襲撃対象にしました。\n'
         return text, err
     
     def request_action(self):

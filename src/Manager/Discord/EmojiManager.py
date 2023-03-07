@@ -1,8 +1,8 @@
-import discord
+from discord import Guild
 
 class EmojiManager():
-    def __init__(self):
-        self.guild = None
+    def __init__(self, guild:Guild):
+        self.guild = guild
         self.emoji_list = {}
         self.emoji_name_list = [
             'citizen',
@@ -12,9 +12,6 @@ class EmojiManager():
             'medium',
             'madman',
         ]
-
-    def register_guild(self, guild:discord.Guild):
-        self.guild = guild
         self.register_emojis()
     
     def register_emojis(self):
@@ -23,5 +20,5 @@ class EmojiManager():
                 self.emoji_list[emoji.name] = emoji
                 print(emoji)
     
-    def get_emoji_list(self) -> list:
-        return [e for e in self.emoji_list.values()]
+    def get_emoji_list(self) -> dict:
+        return self.emoji_list

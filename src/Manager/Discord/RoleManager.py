@@ -2,10 +2,7 @@ import discord
 from discord.utils import get
 
 class RoleManager():
-    def __init__(self):
-        self.game_guild = None
-    # ゲームサーバを登録
-    def register_guild(self, guild:discord.Guild):
+    def __init__(self, guild:discord.Guild):
         self.game_guild = guild
     
     async def assign_role(self, member:discord.Member) -> discord.Role:
@@ -37,6 +34,5 @@ class RoleManager():
             return
         # ロールを全て削除
         for role in self.game_guild.roles:
-            print(role.name)
             if role.name.startswith('player-'):
                 await role.delete()

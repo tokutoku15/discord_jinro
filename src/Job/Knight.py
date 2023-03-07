@@ -8,19 +8,17 @@ class Knight(Job):
             job_display_name='騎士'
         )
     
-    def action(self, source:Player,target:Player, err=None):
-        text = ''
-        if not target.get_is_alive():
-            text = '死亡者を選択することはできません'
+    def action(self, source:Player,target:Player, err=None) -> tuple:
+        if source == target:
+            text = '自分を選択することはできません。他の生存者を選択してください。'
             err = 'error'
             return text, err
-        if source == target:
-            text = '自分を選択することはできません'
+        if not target.is_alive:
+            text = '犠牲者を選択することはできません。生存者を選択してください。'
             err = 'error'
             return text, err
         target.protect()
-        text = '{target}を人狼から守ります\n' \
-                   .format(target=target.get_name())
+        text = f'**{target}**を人狼から守ります\n'
         return text, err
     
     def request_action(self):

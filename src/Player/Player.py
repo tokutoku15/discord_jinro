@@ -1,67 +1,58 @@
-import discord
+from discord import Role, TextChannel
 from Job.Job import Job
 
 class Player():
-    def __init__(self, name:str, id:int, role:discord.Role):
+    def __init__(self, name:str, id:int, role:Role):
+        # プレイヤー情報
         self.name = name
         self.id = id
         self.role = role
-        self.job = None
-        self.my_channel = None
-        self.is_alive = True
-        self.is_reveal_seer = False
-        self.is_reveal_medium = False
-        self.is_protected = False
-        self.will_be_killed = False
+        self.channel:TextChannel = None
+        # ゲーム内に関する情報
         self.has_acted = False
         self.vote_count = 0
-
+        self.is_alive = True
+        self.is_act_finish = False
+        self.is_reveal = False
+        self.is_protected = False
+        self.will_be_kill = False
+        self.job:Job = None
     def __str__(self):
         return self.name
-    def get_name(self) -> str:
-        return self.name
-    def get_is_alive(self) -> bool:
-        return self.is_alive
-    def reset(self):
-        self.is_alive = True
-    def add_job(self, job:Job):
+    # 自分のチャンネルを割り当てる
+    def set_channel(self, channel:TextChannel):
+        self.channel = channel
+    # ゲームの役職を割り当てる
+    def assign_job(self, job:Job):
         self.job = job
-    def get_job(self):
-        return self.job
-    def set_channel(self, channel:discord.TextChannel):
-        self.my_channel = channel
-    def get_channel(self) -> discord.TextChannel:
-        return self.my_channel
-    def reveal_seer(self):
-        self.is_reveal_seer = True
-    def get_reveal_seer(self):
-        return self.is_reveal_seer
-    def reveal_medium(self):
-        self.is_reveal_medium = True
-    def get_reveal_medium(self):
-        return self.is_reveal_medium
+    # 自分に投票される
     def vote(self):
         self.vote_count += 1
+    def reset_vote_count(self):
+        self.vote_count = 0
+    # 行動の終了
+    def finish_act(self):
+        self.is_act_finish = True
+    # 占い師に占われる
+    def seer(self):
+        self.is_reveal = True
+    # 騎士に防衛されるフラグを立てる
     def protect(self):
         self.is_protected = True
-    def get_protect(self):
-        return self.is_protected
+    # 人狼に襲撃されるフラグを立てる
     def will_kill(self):
-        self.will_be_killed = True
-    def get_kill(self):
-        return self.will_be_killed
-    def acted(self):
-        self.has_acted = True
+        self.will_be_kill = True
+    # フラグをリセットする
     def reset_flags(self):
+        self.is_act_finish = False
         self.is_protected = False
-        self.will_be_killed = False
+        self.will_be_kill = False
+    # 犠牲者となる
+    def fall_victim(self):
+        self.is_alive = True
+    # アクション(アクション、投票)が終了
+    def finish_act(self):
+        self.has_acted = True
+    # アクションのリセット
+    def reset_act(self):
         self.has_acted = False
-        self.vote_count = 0
-    # 人狼に襲撃されたらTrue, そうでなければFalse
-    def kill(self) -> bool:
-        if self.will_be_killed and not self.is_protected:
-            return True
-        return False
-    # 犠牲者になる
-    def be_victim(self):
-        self.is_alive = False

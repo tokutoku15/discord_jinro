@@ -1,340 +1,289 @@
 import discord
-from discord.utils import get
-import asyncio
-from Manager.Discord.RoleManager import RoleManager
-from Manager.Discord.TextChannelManager import TextChannelManager
-from Manager.Discord.EmojiManager import EmojiManager
+from discord import (
+    Guild,
+    TextChannel,
+    VoiceChannel,
+    Interaction
+)
 from Manager.Game.GameRuleManager import GameRuleManager
 from Manager.Game.GameStateManager import GameStateManager
-from Manager.Game.JobManager import JobManager
 from Manager.Game.PlayerManger import PlayerManager
-from GameMaster.GameMaster import GameMaster
+from Manager.Game.MainGame import MainGame
+from Manager.Discord.EmojiManager import EmojiManager
+from Manager.Discord.RoleManager import RoleManager
+from Manager.Discord.TextChannelManager import TextChannelManager
 
 class CommandHandler():
     def __init__(self):
-        self.jobManager = JobManager()
-        self.roleManager = RoleManager()
-        self.textChannelManager = TextChannelManager()
-        self.emojiManager = EmojiManager()
-        self.gameStateManager = GameStateManager()
+        self.guild:Guild = None
+        self.lobby_channel:TextChannel = None
+        self.jinro_channel:TextChannel = None
+        self.voice_channel:VoiceChannel = None
         self.gameRuleManager = GameRuleManager()
+        self.gameStateManager = GameStateManager()
         self.playerManager = PlayerManager()
-        self.GM = GameMaster(self.gameRuleManager, self.gameStateManager, self.jobManager, self.playerManager)
-        self.menu_message = None
-        self.game_guild = None
-        # self.game_guild = discord.Guild()
-        self.lobby_channel = None
-        self.jinro_channel = None
-        self.voice_channel = None
-
-    def link_channels(self, lobby_ch, jinro_ch, voice_ch):
-        self.lobby_channel = lobby_ch
-        self.jinro_channel = jinro_ch
-        self.voice_channel = voice_ch
-        self.GM.register_lobby_channel(self.lobby_channel)
-    
-    def link_info(self, guild):
-        self.game_guild = guild
-        self.roleManager.register_guild(guild=self.game_guild)
-        self.textChannelManager.register_guild(guild=self.game_guild)
-        self.emojiManager.register_guild(guild=self.game_guild)
-        emoji_list = self.emojiManager.get_emoji_list()
-        self.jobManager.register_job_emoji(emoji_list)
-    
-    async def delete_roles_channels(self):
+        self.mainGame = MainGame(self.gameRuleManager, self.gameStateManager, self.playerManager)
+        self.setting_menu:discord.Message = None
+    # Discordの情報をハンドラにも紐づける
+    def link_discord_info(self, guild:Guild, lobby:TextChannel, jinro:TextChannel, voice:VoiceChannel):
+        self.guild = guild
+        self.lobby_channel = lobby
+        self.jinro_channel = jinro
+        self.voice_channel = voice
+        self.emojiManager = EmojiManager(guild=self.guild)
+        self.roleManager = RoleManager(guild=self.guild)
+        self.textChannelManager = TextChannelManager(guild=self.guild)
+        self.mainGame.register_lobby_channel(lobby)
+        emojis = self.emojiManager.get_emoji_list()
+        self.gameRuleManager.set_job_emoji(emojis)
+        
+    # チャンネルとロールの削除(起動時とstop時)
+    async def delete_channels_roles(self):
         await self.roleManager.delete_roles()
         await self.textChannelManager.delete_channels()
-
-    async def join(self, ctx:discord.Interaction):
-        if not await self.is_lobby_channel(ctx):
+    # ゲームの設定を始める
+    async def game(self, inter:Interaction):
+        if not await self.is_lobby_channel(inter):
             return
-        if not await self.is_bot_active(ctx):
+        if not await self.is_wait_mode(inter):
             return
-        if not await self.is_game_ready(ctx):
-            return
-        await ctx.response.defer()
-        role = await self.roleManager.assign_role(ctx.user)
-        text, err  = self.playerManager.register_player(ctx.user.name, ctx.user.id, role)
-        if err:
-            await ctx.followup.send(text, ephemeral=True)
-            return
-        await ctx.followup.send(text)
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        print(self.menu_message)
-        await self.menu_message.delete()
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-        print(self.menu_message)
-    
-    async def exit(self, ctx:discord.Interaction):
-        text = ''
-        if not await self.is_lobby_channel(ctx):
-            return
-        if not await self.is_bot_active(ctx):
-            return
-        if not await self.is_game_ready(ctx):
-            return
-        text, err = self.playerManager.remove_player(ctx.user.name, ctx.user.id)
-        if err:
-            await ctx.response.send_message(text, ephemeral=True)
-            return
-        await ctx.response.defer(thinking=False)
-        await self.roleManager.delete_role(ctx.user.name)
-        await ctx.followup.send(text)
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        print(self.menu_message)
-        await self.menu_message.delete()
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-        print(self.menu_message)
-    
-    async def run(self, ctx:discord.Interaction):
-        text = ''
-        if not await self.is_lobby_channel(ctx):
-            return
-        if not await self.is_bot_sleep(ctx):
-            return
-        if not await self.is_game_ready(ctx):
-            return
-        await ctx.response.defer()
-        text = 'botを起動します。おはようございます。\nこれからゲームの設定を始めます。'
-        await ctx.followup.send(text)
-        self.gameStateManager.active_bot()
+        await inter.response.defer(thinking=False)
+        self.gameStateManager.game_setting()
+        text = '今からゲームの設定を始めます。\n「**/menu**」や「**/job**」で設定を変更してください。\n' \
+                '「**/join**」でゲームに参加、「**/exit**」でゲームから退出できます。\n' \
+                '設定が決まったら「**/start**」でゲームを始めてください。'
+        embed = discord.Embed(title="#### Botの起動 ####", description=text, color=0x888888)
+        await inter.followup.send(embed=embed)
         if self.voice_channel.members:
-            member_num = len(self.voice_channel.members)
-            if  member_num >= 3:
-                self.jobManager.set_default_num(member_num)
             for member in self.voice_channel.members:
                 role = await self.roleManager.assign_role(member)
-                self.playerManager.register_player(member.display_name, member.id, role)
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-        print(self.menu_message)
-    
-    async def onenightkill(self, ctx:discord.Interaction, onoff:str):
-        if not await self.is_lobby_channel(ctx):
+                self.playerManager.register_player(member=member, role=role)
+        embed = self.gameRuleManager.game_setting_embed(self.playerManager)
+        self.setting_menu = await inter.channel.send(embed=embed)
+    # ゲームに参加する
+    async def join(self, inter:Interaction):
+        if not await self.is_lobby_channel(inter):
             return
-        if not await self.is_bot_active(ctx):
+        if not await self.is_setting_mode(inter):
+            return 
+        role = await self.roleManager.assign_role(inter.user)
+        text, err = self.playerManager.register_player(inter.user, role)
+        if err:
+            await self.send_warning(inter,text)
             return
-        if not await self.is_game_ready(ctx):
+        await inter.response.defer(thinking=False)
+        embed = discord.Embed(title=f'{inter.user.name}さんの参加', description=text)
+        embed.set_thumbnail(url=inter.user.avatar)
+        await inter.followup.send(embed=embed)
+        if self.setting_menu:
+            embed = self.gameRuleManager.game_setting_embed(self.playerManager)
+            await self.setting_menu.delete()
+            self.setting_menu = await inter.channel.send(embed=embed)
+    # ゲームから退出する
+    async def exit(self, inter:Interaction):
+        if not await self.is_lobby_channel(inter):
             return
-        text = '第一夜の襲撃の設定を変更しました。'
-        await ctx.response.send_message(text)
-        await self.menu_message.delete()
-        print(onoff)
+        if not await self.is_setting_mode(inter):
+            return
+        text, err = self.playerManager.remove_player(inter.user)
+        if err:
+            await self.send_warning(inter,text)
+            return
+        await inter.response.defer(thinking=False)
+        await self.roleManager.delete_role(inter.user.name)
+        await inter.followup.send(text)
+        embed = self.gameRuleManager.game_setting_embed(self.playerManager)
+        await self.setting_menu.delete()
+        self.setting_menu = await self.lobby_channel.send(embed=embed)
+    # 第一夜の行動を決める
+    async def menu(self, inter:Interaction, menu:str, onoff:str):
+        if not await self.is_lobby_channel(inter):
+            return
+        if not await self.is_setting_mode(inter):
+            return
+        await inter.response.defer(thinking=False)
+        menu_ja = lambda x: '襲撃' if x == 'kill' else '占い'
+        text = '第一夜の{}の設定を変更しました。'.format(menu_ja(menu))
+        await inter.followup.send(text)
         is_on = lambda x: True if x == 'on' else False
-        self.gameRuleManager.set_one_night_kill(is_on(onoff))
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-        print(self.menu_message)
-    
-    async def onenightseer(self, ctx:discord.Interaction, onoff:str):
-        if not await self.is_lobby_channel(ctx):
+        if menu == 'kill':
+            self.gameRuleManager.set_one_night_kill(is_on(onoff))
+        else:
+            self.gameRuleManager.set_one_night_seer(is_on(onoff))
+        embed = self.gameRuleManager.game_setting_embed(self.playerManager)
+        await self.setting_menu.delete()
+        self.setting_menu = await inter.channel.send(embed=embed)
+    # 役職の人数を決める
+    async def job(self, inter:Interaction, name:str, num:int):
+        if not await self.is_lobby_channel(inter):
             return
-        if not await self.is_bot_active(ctx):
+        if not await self.is_setting_mode(inter):
             return
-        if not await self.is_game_ready(ctx):
-            return
-        text = '第一夜の占いの設定を変更しました。'
-        await ctx.response.send_message(text)
-        await self.menu_message.delete()
-        print(onoff)
-        is_on = lambda x: True if x == 'on' else False
-        self.gameRuleManager.set_one_night_seer(is_on(onoff))
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-        print(self.menu_message)
-    
-    async def job(self, ctx:discord.Interaction, name:str, num:int):
-        if not await self.is_lobby_channel(ctx):
-            return
-        if not await self.is_bot_active(ctx):
-            return
-        if not await self.is_game_ready(ctx):
-            return
-        await ctx.response.defer(thinking=False)
+        await inter.response.defer(thinking=False)
         text = '役職の数を変更しました'
-        await ctx.followup.send(text)
-        self.jobManager.set_job_num(name, num)
-        await self.menu_message.delete()
-        embed = self.gameRuleManager.game_setting_Embed(self.jobManager, self.playerManager)
-        self.menu_message = await self.lobby_channel.send(embed=embed)
-    
-    async def help(self, ctx:discord.Interaction):
-        text = 'ゲーム設定コマンドを表示します'
-        await ctx.response.send_message(text, ephemeral=True)
-        embed = self.gameRuleManager.help_command_Embed()
-        await ctx.followup.send(embed=embed, ephemeral=True)
-
-    async def start(self, ctx:discord.Interaction):
-        if not await self.is_lobby_channel(ctx):
+        await inter.followup.send(text)
+        self.gameRuleManager.set_job_num(name, num)
+        embed = self.gameRuleManager.game_setting_embed(self.playerManager)
+        await self.setting_menu.delete()
+        self.setting_menu = await inter.channel.send(embed=embed)
+    # ゲームを始める
+    async def start(self, inter:Interaction):
+        if not await self.is_lobby_channel(inter):
             return
-        if not await self.is_bot_active(ctx):
+        if not await self.is_setting_mode(inter):
             return
-        if not await self.is_game_ready(ctx):
+        if not await self.is_ok_job_count(inter):
             return
-        if not await self.is_ok_job_count(ctx):
-            return
-        await ctx.response.defer(thinking=False)
-        self.gameStateManager.game_start()
+        await inter.response.defer(thinking=False)
         text = 'ゲームを始めます。'
-        await ctx.followup.send(text)
+        await inter.followup.send(text)
         self.assign_jobs()
         await self.make_private_channels()
-        await self.GM.send_players_job()
-        # await asyncio.sleep(3)
-        await self.GM.send_night_phase()
-
-    async def stop(self, ctx:discord.Interaction):
-        if not await self.is_lobby_channel(ctx):
+        # ===========================
+        # ここからゲーム本編を始める
+        # ===========================
+        await self.mainGame.send_players_job()
+        await self.mainGame.send_night_phase()
+    # ゲームをやめ、botを停止する
+    async def stop(self, inter:Interaction):
+        if not await self.is_lobby_channel(inter):
             return
-        if not await self.is_bot_active(ctx):
+        if self.gameStateManager.get_now_phase() == 'wait':
+            text = 'botはもう待機状態です。**/game**コマンドでbotを起動してください'
+            await self.send_warning(inter,text)
             return
-        await ctx.response.defer()
-        self.playerManager.__init__()
-        self.jobManager.__init__()
-        self.gameStateManager.game_stop()
-        self.gameStateManager.stop_bot()
-        await self.delete_roles_channels()
-        if self.menu_message:
-            await self.menu_message.delete()
-        text = 'ゲームを終了し、Botを停止します。おやすみなさい。'
-        await ctx.followup.send(text)
-
-    async def action(self, ctx:discord.Interaction, target:str):
-        if not self.textChannelManager.is_private_channel(ctx.channel):
-            text = 'プライベートチャンネルで実行してください'
-            await ctx.response.send_message(text, ephemeral=True)
+        await inter.response.defer()
+        self.mainGame.reset_game()
+        self.playerManager.reset_players()
+        await self.delete_channels_roles()
+        text = 'ゲームを中止し、Botを停止します。おやすみなさい'
+        await inter.followup.send(text)
+    # 使用できるコマンドを表示する
+    async def help(self, inter:Interaction):
+        await inter.response.defer(ephemeral=True)
+        embed = self.gameRuleManager.bot_command_embed()
+        await inter.followup.send(embed=embed)
+    # プレイヤーへのアクションを行う
+    async def action(self, inter:Interaction, target:str):
+        if not await self.is_ok_game_command(inter, "action"):
             return
-        if not await self.is_bot_active(ctx):
+        # source playerについての処理
+        s_player = self.playerManager.get_player_from_member(inter.user)
+        if not s_player.is_alive:
+            text = '犠牲者はアクションができません。ゲームが終了するまでお待ちください'
+            await self.send_warning(inter,text)
             return
-        if not self.gameStateManager.get_is_game_start():
-            text = 'ゲームは始まっていません\n**/start**コマンドでゲームを始めてください。'
-            await ctx.response.send_message(text, ephemeral=True)
-            return
-        if self.gameStateManager.get_now_phase() != 'night':
-            text = '今はアクションが実行できません。夜の時間に実行してください。'
-            await ctx.response.send_message(text, ephemeral=True)
-            return
-        s_player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
         if s_player.has_acted:
-            text = 'もうアクションは終えています。他のプレイヤーのアクションが終わるまでお待ちください。'
-            await ctx.response.send_message(text)
+            text = 'もうアクションは終えています。他のプレイヤーのアクションが終わるまでお待ちください'
+            await self.send_warning(inter,text)
             return
-        if not s_player.get_is_alive():
-            text = '犠牲者はアクションできません。ゲームが終了するまでお待ちください。'
-            await ctx.response.send_message(text)
-            return
-        # @ロール名 で送信すると <@&{ROLE_ID}> になる
+        # target playerについての処理
         t_player = self.playerManager.get_player_from_role(name=target)
         if t_player is None:
-            text = 'プレイヤーを選択してください ex. 「@player-ほげほげ」'
-            await ctx.response.send_message(text)
+            text = 'プレイヤーを選択してください。 ex. 「@player-ほげほげ」'
+            await self.send_warning(inter, text)
             return
-        await ctx.response.defer()
-        await self.GM.accept_action(ctx=ctx, source=s_player,target=t_player)
-    
-    async def vote(self, ctx:discord.Interaction, target:str):
-        text = ''
-        if not self.textChannelManager.is_private_channel(ctx.channel):
-            text = 'プライベートチャンネルで実行してください'
-            await ctx.response.send_message(text, ephemeral=True)
+        await inter.response.defer()
+        await self.mainGame.accept_player_action(inter=inter, source=s_player, target=t_player)
+    # プレイヤーへの投票を行う
+    async def vote(self, inter:Interaction, target:str):
+        if not await self.is_ok_game_command(inter, "vote"):
             return
-        if not await self.is_bot_active(ctx):
+        s_player = self.playerManager.get_player_from_member(inter.user)
+        if not s_player.is_alive:
+            text = '犠牲者は投票ができません。ゲームが終了するまでお待ちください'
+            await self.send_warning(inter,text)
             return
-        if not self.gameStateManager.get_is_game_start():
-            text = 'ゲームは始まっていません\n**/start**コマンドでゲームを始めてください。'
-            await ctx.response.send_message(text, ephemeral=True)
-            return
-        if self.gameStateManager.get_now_phase() != 'vote':
-            text = '今は投票できません。投票の時間に実行してください。'
-            await ctx.response.send_message(text, ephemeral=True)
-            return
-        s_player = self.playerManager.get_player_from_member(mem_id=ctx.user.id)
         if s_player.has_acted:
-            text = 'もう投票は終えています。他のプレイヤーの投票が終わるまでお待ちください。'
-            await ctx.response.send_message(text)
-            return
-        if not s_player.get_is_alive():
-            text = '犠牲者は投票できません。ゲームが終了するまでお待ちください。'
-            await ctx.response.send_message(text)
-            return
-        # @ロール名 で送信すると <@&{ROLE_ID}> になる
+            text = 'もう投票は終えています。他のプレイヤーの投票が終わるまでお待ちください'
+            await self.send_warning(inter,text)
+            return        
         t_player = self.playerManager.get_player_from_role(name=target)
         if t_player is None:
-            text = 'プレイヤーを選択してください ex. 「@player-ほげほげ」'
-            await ctx.response.send_message(text)
+            text = 'プレイヤーを選択してください。 ex. 「@player-ほげほげ」'
+            await self.send_warning(inter, text)
             return
-        await ctx.response.defer()
-        if s_player == t_player:
-            text = '自分に投票はできません。他のプレイヤーに投票してください。'
-            await ctx.followup.send(text)
-            return
-        text = f'{t_player}に投票しました'
-        await ctx.followup.send(text)
-        t_player.vote()
-        s_player.acted()
-        await self.GM.accept_vote(ctx)
-
-    async def is_lobby_channel(self, ctx:discord.Interaction) -> bool:
-        if self.lobby_channel != ctx.channel:
+        await inter.response.defer()
+        await self.mainGame.accept_player_vote(inter=inter,source=s_player,target=t_player)
+    # ロビーチャンネルで実行されてるかどうか
+    async def is_lobby_channel(self, inter:Interaction) -> bool:
+        if self.lobby_channel != inter.channel:
             text = 'ロビーチャンネルで実行してください'
-            await ctx.response.send_message(text, ephemeral=True)
+            await self.send_warning(inter,text)
             return False
         return True
-    
-    async def is_bot_active(self, ctx:discord.Interaction) -> bool:
-        if not self.gameStateManager.get_is_bot_active():
-            text = 'botは休止中です。**/run**コマンドで起こしてください。'
-            await ctx.response.send_message(text, ephemeral=True)
+    # botが待機状態か
+    async def is_wait_mode(self, inter:Interaction) -> bool:
+        if self.gameStateManager.get_now_phase() != 'wait':
+            text = 'botが待機状態ではありません'
+            await self.send_warning(inter,text)
             return False
         return True
-    
-    async def is_bot_sleep(self, ctx:discord.Interaction) -> bool:
-        if self.gameStateManager.get_is_bot_active():
-            text = 'botはすでに立ち上がっています。'
-            await ctx.response.send_message(text, ephemeral=True)
+    # botが設定モードか
+    async def is_setting_mode(self, inter:Interaction) -> bool:
+        if self.gameStateManager.get_now_phase() != 'setting':
+            text = 'botが設定モードではありません'
+            await self.send_warning(inter,text)
             return False
         return True
-    
-    async def is_game_ready(self, ctx:discord.Interaction) -> bool:
-        if self.gameStateManager.get_is_game_start():
-            text = 'ゲームはもうすでに始まっています。'
-            await ctx.response.send_message(text, ephemeral=True)
-            return False
-        return True
-    
-    async def is_ok_job_count(self, ctx:discord.Interaction) -> bool:
+    # ジョブの数とプレイヤーの数に相違がないか
+    async def is_ok_job_count(self, inter:Interaction) -> bool:
         player_num = self.playerManager.get_player_count()
-        citizen, werewolf = self.jobManager.get_group_count()
+        citizen, werewolf = self.gameRuleManager.get_group_num()
         job_num = citizen + werewolf
+        print(player_num, job_num)
         if player_num <= 2:
             text = '3人以上でゲームを始めてください'
-            await ctx.response.send_message(text)
+            await self.send_warning(inter,text)
             return False
-        if werewolf <= 0:
+        if werewolf == 0:
             text = '人狼の数を1以上にしてください'
-            await ctx.response.send_message(text)
+            await self.send_warning(inter,text)
             return False
         if citizen <= werewolf:
             text = '人狼を市民陣営の合計よりも少なくしてください'
-            await ctx.response.send_message(text)
+            await self.send_warning(inter,text)
             return False
         if player_num != job_num:
             text = 'プレイヤーの合計と役職の合計が一致しません'
-            await ctx.response.send_message(text)
+            await self.send_warning(inter,text)
             return False
         return True
-    
+    # actionコマンド,voteコマンドを受け付けるためのチェック
+    async def is_ok_game_command(self, inter:Interaction, command:str) -> bool:
+        if not self.textChannelManager.is_private_channel(inter.channel):
+            text = 'プライベートチャンネルでコマンドを実行してください'
+            await self.send_warning(inter,text)
+            return False
+        if self.gameStateManager.get_now_phase() == 'wait':
+            text = 'botが待機状態です。**/game**コマンドで起動してください'
+            await self.send_warning(inter,text)
+            return False
+        if self.gameStateManager.get_now_phase() == 'setting':
+            text = 'botは設定モードです。**/start**コマンドで起動してください。'
+            await self.send_warning(inter,text)
+            return False
+        if command == 'action' and not self.gameStateManager.get_now_phase() == 'night':
+            text = '今はアクションが実行できません。夜の時間に実行してください'
+            await self.send_warning(inter,text)
+            return False
+        elif command == 'vote' and not self.gameStateManager.get_now_phase() == 'vote':
+            text = '今は投票できません。投票の時間に実行してください'
+            await self.send_warning(inter,text)
+            return False
+        return True
+    # 役職割り当て
+    def assign_jobs(self):
+        job_stack = self.gameRuleManager.get_job_stack()
+        self.playerManager.assign_jobs(job_stack)
+    # プライベートチャンネル作成
     async def make_private_channels(self):
-        category = get(self.game_guild.categories, name="人狼ゲーム")
         for player in self.playerManager.get_player_list():
-            if player.get_job().group == 'werewolf':
+            if player.job.appear_group == 'werewolf':
                 await self.textChannelManager.add_role_to_channel(self.jinro_channel, player.role)
             channel = await self.textChannelManager.create_private_channel(player_name=player.name)
-            await channel.edit(category=category)
             player.set_channel(channel)
-    
-    def assign_jobs(self):
-        job_stack = self.jobManager.get_stack()
-        for player in self.playerManager.get_player_list():
-            player.add_job(job_stack.pop(0))
-            print(player.get_job())
+    # コマンドが実行できないことを送信するメソッド
+    async def send_warning(self, inter:Interaction, text:str):
+        await inter.response.defer(ephemeral=True)
+        await inter.followup.send(text)

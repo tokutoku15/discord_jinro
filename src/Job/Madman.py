@@ -1,15 +1,15 @@
 from Job.Job import Job
 from Player.Player import Player
 
-class Citizen(Job):
+class Madman(Job):
     def __init__(self):
         super().__init__(
-            job_name='citizen',
-            job_display_name='市民'
+            job_name='madman',
+            job_display_name='狂人',
+            group='werewolf',
         )
     
     def action(self, source:Player, target:Player, err=None) -> tuple:
-        print("Citizen@action")
         if source == target:
             text = '自分を選択することはできません。他の生存者を選択してください。'
             err = 'error'
@@ -19,7 +19,7 @@ class Citizen(Job):
             err = 'error'
             return text, err
         target.vote()
-        text = f'**{target}**を人狼だと疑いました\n'
+        text = f'**{target}**を人狼だと疑いました'
         return text, err
     
     def request_action(self):
@@ -28,5 +28,5 @@ class Citizen(Job):
         return text
     
     def description_action(self):
-        text = '目的は全ての人狼を処刑して市民陣営が勝つことです。'
+        text = '目的は村人陣営を人狼陣営よりも少なくして生き残ることです。誰が人狼か知ることはできません。'
         return text
