@@ -12,7 +12,6 @@ class Player():
         self.has_acted = False
         self.vote_count = 0
         self.is_alive = True
-        self.is_act_finish = False
         self.is_reveal = False
         self.is_protected = False
         self.will_be_kill = False
@@ -44,7 +43,7 @@ class Player():
         self.will_be_kill = True
     # フラグをリセットする
     def reset_flags(self):
-        self.is_act_finish = False
+        self.has_acted = False
         self.is_protected = False
         self.will_be_kill = False
     # 犠牲者となる

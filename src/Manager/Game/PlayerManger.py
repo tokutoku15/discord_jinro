@@ -133,7 +133,6 @@ class PlayerManager():
                 doubt_players.append(player)
             elif max_vote == player.vote_count:
                 doubt_players.append(player)
-            player.reset_vote_count()
         if kill_players:
             ret['kill'] = kill_players
         if doubt_players:
@@ -150,7 +149,6 @@ class PlayerManager():
                 self.judgement_players.append(player)
             elif max_vote == player.vote_count:
                 self.judgement_players.append(player)
-            player.reset_vote_count()
         return self.judgement_players
 
     #決選投票用の表示
@@ -165,3 +163,4 @@ class PlayerManager():
         for player in self.player_dict.values():
             if player.is_alive:
                 player.reset_flags()
+            player.reset_vote_count()

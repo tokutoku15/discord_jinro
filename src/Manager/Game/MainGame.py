@@ -216,6 +216,20 @@ class MainGame():
         if not target.is_alive:
             text = '犠牲者に投票することはできません。生存者に投票してください。'
             await inter.followup.send(text)
+            return
+        target.vote()
+        source.finish_act()
+        self.vote_count += 1
+        text = f'**{target}**に投票しました。他のプレイヤーの投票が終わるまでお待ちください。'
+        await inter.followup.send(text)
+        vote_title, vote_text = self.playerManager.get_vote_count_display()
+        vote_embed = discord.Embed(title=vote_title, description=vote_text, color=self.colors['vote'])
+        for mes in self.vote_count_message:
+            await mes.edit(embed=vote_embed)
+        if self.vote_count == self.playerManager.get_alive_player_count():
+            self.vote_count = 0
+            text = '投票が終了しました'
+            await self.lobby_channel.send(text)
     # 残り時間を増やすボタン
     class PlusButton(discord.ui.Button):
         def __init__(self, *, 
