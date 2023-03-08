@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord import (
     Guild,
@@ -165,6 +166,7 @@ class CommandHandler():
         # ここからゲーム本編を始める
         # ===========================
         await self.mainGame.send_players_job()
+        await asyncio.sleep(5)
         await self.mainGame.send_night_phase()
     # ゲームをやめ、botを停止する
     async def stop(self, inter:Interaction):

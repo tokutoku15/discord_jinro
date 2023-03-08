@@ -64,7 +64,7 @@ class MainGame():
             text = '容疑者を処刑したにもかかわらず、再び' + text
         embed = discord.Embed(title=title, description=text, color=self.colors['night'])
         await self.lobby_channel.send(embed=embed)
-        # await asyncio.sleep(5)
+        await asyncio.sleep(5)
         await self.send_request_action()
     # アクションをリクエストするテキストをそれぞれのチャンネルへ送信
     async def send_request_action(self):
@@ -132,6 +132,7 @@ class MainGame():
         if self.vote_count == self.playerManager.get_alive_player_count():
             self.vote_count = 0
             await self.lobby_channel.send('全員のアクションが終了しました。')
+            await asyncio.sleep(3)
             await self.send_morning_phase()
     # 朝のフェーズを送信
     async def send_morning_phase(self):
@@ -170,6 +171,7 @@ class MainGame():
         text += 'これから人狼を探し出すために話し合いを始めてください\n' \
                 f'話し合いの時間は{self.gameRuleManager.discuss_time//60}分です。'
         embed = discord.Embed(title=title, description=text, color=self.colors['morning'])
+        await asyncio.sleep(5)
         await self.lobby_channel.send(embed=embed)
         self.playerManager.reset_players_flags()
         await self.send_discuss_phase()
@@ -211,6 +213,7 @@ class MainGame():
                 '**「player-」**から始まるプライベートチャンネルで投票を行なってください。'
         embed = discord.Embed(title=title,description=text, color=self.colors['vote'])
         await self.lobby_channel.send(embed=embed)
+        await asyncio.sleep(3)
         await self.send_request_vote()
     # 投票のリクエストを送信
     async def send_request_vote(self):
@@ -222,7 +225,7 @@ class MainGame():
         for player in self.playerManager.get_player_list():
             if not player.is_alive:
                 vote_text += '\n※犠牲者は投票ができません。'
-                vote_embed.description = text
+                vote_embed.description = vote_text
             await player.channel.send(embed=embed)
             message = await player.channel.send(embed=vote_embed)
             self.vote_count_message.append(message)
@@ -259,6 +262,7 @@ class MainGame():
             self.vote_count_message.clear()
             text = '全員の投票が完了しました'
             await self.lobby_channel.send(text)
+            await asyncio.sleep(3)
             await self.send_judgement()
     async def send_judgement(self):
         title = '#### 処刑の時間 ####'
@@ -323,6 +327,7 @@ class MainGame():
                 await self.send_night_phase()
     # 勝利判定
     async def send_who_win(self, end=False) -> bool:
+        await asyncio.sleep(3)
         alive_citizen, alive_werewolf = self.playerManager.get_alive_appear_group()
         is_knight_alive = self.playerManager.get_is_knight_alive()
         print(alive_citizen, alive_werewolf, is_knight_alive)
@@ -350,11 +355,13 @@ class MainGame():
             await self.lobby_channel.send(embed=embed)
             end = True
         if end:
-            text = 'お疲れ様でした。\n続けてゲームをするときは**/game**コマンド、終了するときは**/stop**コマンドを実行してください。'
+            self.gameStateManager.game_result()
+            asyncio.sleep(3)
+            text = 'お疲れ様でした。\n続けてゲームをするときは**/game**コマンドを実行してください。'
             embed = discord.Embed(title='ゲーム終了', description=text)
             embed.set_author(name=self.bot.user,icon_url=self.bot.user.avatar)
             await self.lobby_channel.send(embed=embed)
-            self.gameStateManager.game_result()
+            self.gameStateManager.game_wait()
         return end
     # リザルトの埋め込みテキスト
     def game_result_embed(self, group:str, next_night_kill:bool) -> discord.Embed:
