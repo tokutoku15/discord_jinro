@@ -17,7 +17,9 @@ class Job(metaclass=ABCMeta):
         self.group = group
         self.emoji:Emoji = None
     def __str__(self):
-        return f'{self.emoji}{self.job_display_name}'
+        return self.job_display_name
+    def name_with_emoji(self) -> str:
+        return f'{self.emoji}{str(self)}'
     def set_emoji(self, emoji:Emoji):
         self.emoji = emoji
     def get_emoji(self):

@@ -111,7 +111,7 @@ class GameRuleManager():
         time = '{:02d}分{:02d}秒'.format(self.discuss_time//60, self.discuss_time%60)
         embed.add_field(name='話し合いの時間', value=time, inline=True)
         job_num_text = '\n'.join([
-            '{} : **{}**人'.format(job, num)
+            '{} : **{}**人'.format(job.name_with_emoji(), num)
             for job, num in self.job_num.items()
         ])
         job_sum = self.get_job_sum()

@@ -76,10 +76,13 @@ class MainGame():
             else:
                 alive_title, alive_text = self.playerManager.get_alive_display(is_alive=True, my_job=player.job)
                 victim_title, victim_text = self.playerManager.get_alive_display(is_alive=False, my_job=player.job)
+                emoji_id = player.job.get_emoji().id
+                url = f'https://cdn.discordapp.com/emojis/{emoji_id}'
                 embed = discord.Embed(title="アクションの実行", color=self.colors['night'])
                 embed.add_field(name=alive_title, value=alive_text, inline=True)
                 embed.add_field(name=victim_title, value=victim_text, inline=True)
-                request_text = f'{player.job.request_action()}'
+                embed.set_thumbnail(url=url)
+                request_text = player.job.request_action()
                 if self.gameStateManager.day == 1:
                     if player.job.job_name == 'seer' and not self.gameRuleManager.one_night_seer:
                         request_text += '\n※第一夜の占いは「なし」なので人狼だと思うプレイヤーを選択してください。'
@@ -169,8 +172,10 @@ class MainGame():
     # 話し合いの残り時間を表示
     async def display_time_remaining(self):
         view = discord.ui.View()
-        view.add_item(self.PlusButton(gameRuleManager=self.gameRuleManager))
-        view.add_item(self.StopButton(gameRuleManager=self.gameRuleManager))
+        plus_button = self.PlusButton(gameRuleManager=self.gameRuleManager)
+        stop_button = self.StopButton(gameRuleManager=self.gameRuleManager, plus_button=plus_button)
+        view.add_item(plus_button)
+        view.add_item(stop_button)
         print('display_time_remaining')
         minute = self.gameRuleManager.discuss_time // 60
         second = self.gameRuleManager.discuss_time % 60
@@ -264,6 +269,8 @@ class MainGame():
             # TODO: 人狼or市民の勝利判定
             # @ここでどちらかが勝利なら終了
             # =========================
+            if await self.send_who_win():
+                return
             await self.send_night_phase()
             return
         else:
@@ -300,10 +307,27 @@ class MainGame():
                 # TODO: 人狼or市民の勝利判定
                 # @ここでどちらかが勝利なら終了
                 # =========================
+                if await self.send_who_win():
+                    return
                 await self.send_night_phase()
     # 勝利判定
     async def send_who_win(self, end=False) -> bool:
-        pass
+        alive_citizen, alive_werewolf = self.playerManager.get_alive_appear_group()
+        is_knight_alive = self.playerManager.get_is_knight_alive()
+        print(alive_citizen, alive_werewolf, is_knight_alive)
+        if not is_knight_alive and alive_citizen <= alive_werewolf + 1:
+            text = '人狼の勝利'
+            await self.lobby_channel.send(text)
+            end = True
+        elif is_knight_alive and alive_citizen <= alive_werewolf:
+            text = '人狼の勝利'
+            await self.lobby_channel.send(text)
+            end = True
+        elif alive_werewolf == 0:
+            text = '市民の勝利'
+            await self.lobby_channel.send(text)
+            end = True
+        return end
     # 残り時間を増やすボタン
     class PlusButton(discord.ui.Button):
         def __init__(self, *, 
@@ -323,12 +347,20 @@ class MainGame():
         def __init__(self, *,
                     style: ButtonStyle=ButtonStyle.danger,
                     label: str="Stop",
-                    gameRuleManager: GameRuleManager
+                    gameRuleManager: GameRuleManager,
+                    plus_button: discord.ui.Button,
         ):
             super().__init__(style=style, label=label)
             self.gameRuleManager = gameRuleManager
+            self.plus_button = plus_button
         
         async def callback(self, inter:discord.Interaction):
             text = '話し合いの時間を終了します'
             self.gameRuleManager.set_time(1)
-            await inter.response.send_message(text)
+            self.disabled = True
+            self.plus_button.disabled = True
+            view = discord.ui.View()
+            view.add_item(self.plus_button)
+            view.add_item(self)
+            await inter.response.edit_message(view=view)
+            await inter.followup.send(text)

@@ -62,6 +62,10 @@ class CommandHandler():
         self.setting_menu = await inter.channel.send(embed=embed)
     # ゲームに参加する
     async def join(self, inter:Interaction):
+        if self.setting_menu is None:
+            await inter.response.defer(ephemeral=True)
+            await inter.followup.send('設定メニューが表示されるまでお待ちください。')
+            return
         if not await self.is_lobby_channel(inter):
             return
         if not await self.is_setting_mode(inter):
@@ -81,6 +85,10 @@ class CommandHandler():
             self.setting_menu = await inter.channel.send(embed=embed)
     # ゲームから退出する
     async def exit(self, inter:Interaction):
+        if self.setting_menu is None:
+            await inter.response.defer(ephemeral=True)
+            await inter.followup.send('設定メニューが表示されるまでお待ちください。')
+            return
         if not await self.is_lobby_channel(inter):
             return
         if not await self.is_setting_mode(inter):
@@ -97,6 +105,10 @@ class CommandHandler():
         self.setting_menu = await self.lobby_channel.send(embed=embed)
     # 第一夜の行動を決める
     async def menu(self, inter:Interaction, menu:str, onoff:str):
+        if self.setting_menu is None:
+            await inter.response.defer(ephemeral=True)
+            await inter.followup.send('設定メニューが表示されるまでお待ちください。')
+            return
         if not await self.is_lobby_channel(inter):
             return
         if not await self.is_setting_mode(inter):
@@ -111,10 +123,16 @@ class CommandHandler():
         else:
             self.gameRuleManager.set_one_night_seer(is_on(onoff))
         embed = self.gameRuleManager.game_setting_embed(self.playerManager)
+        while self.setting_menu is None:
+                continue
         await self.setting_menu.delete()
         self.setting_menu = await inter.channel.send(embed=embed)
     # 役職の人数を決める
     async def job(self, inter:Interaction, name:str, num:int):
+        if self.setting_menu is None:
+            await inter.response.defer(ephemeral=True)
+            await inter.followup.send('設定メニューが表示されるまでお待ちください。')
+            return
         if not await self.is_lobby_channel(inter):
             return
         if not await self.is_setting_mode(inter):
@@ -125,6 +143,7 @@ class CommandHandler():
         self.gameRuleManager.set_job_num(name, num)
         embed = self.gameRuleManager.game_setting_embed(self.playerManager)
         await self.setting_menu.delete()
+        print(self.setting_menu)
         self.setting_menu = await inter.channel.send(embed=embed)
     # ゲームを始める
     async def start(self, inter:Interaction):

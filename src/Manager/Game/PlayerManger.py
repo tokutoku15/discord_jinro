@@ -174,14 +174,22 @@ class PlayerManager():
             if player.is_alive:
                 player.reset_flags()
             player.reset_vote_count()
+    # 生存している騎士がいるかどうか
+    # 人狼の勝利判定に必要
+    def get_is_knight_alive(self) -> bool:
+        for player in self.player_dict.values():
+            if player.is_alive and player.job.job_name == 'knight':
+                return True
+        return False
     # 生存しているプレイヤーの見かけの陣営を取得
+    # 狂人を市民陣営でカウントして勝利判定メソッドに渡す
     def get_alive_appear_group(self) -> tuple[int, int]:
         alive_appear_citizen = 0
         alive_appear_werewolf = 0
         for player in self.player_dict.values():
             if not player.is_alive:
                 continue
-            if player.appear_group == 'citizen':
+            if player.job.appear_group == 'citizen':
                 alive_appear_citizen += 1
             else:
                 alive_appear_werewolf += 1
