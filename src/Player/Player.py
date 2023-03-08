@@ -48,7 +48,7 @@ class Player():
         self.will_be_kill = False
     # 犠牲者となる
     def fall_victim(self):
-        self.is_alive = True
+        self.is_alive = False
     # アクション(アクション、投票)が終了
     def finish_act(self):
         self.has_acted = True

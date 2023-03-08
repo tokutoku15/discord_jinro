@@ -43,8 +43,8 @@ class GameRuleManager():
         }
     # ゲームルールの初期化
     def reset_rule(self):
-        self.set_one_night_kill = False
-        self.set_one_night_seer = False
+        self.one_night_kill = False
+        self.one_night_seer = False
         self.setting_discuss_time = 300
         self.discuss_time = self.setting_discuss_time
         for k in self.job_num.keys():

@@ -168,7 +168,7 @@ class CommandHandler():
         if not await self.is_ok_game_command(inter, "action"):
             return
         # source playerについての処理
-        s_player = self.playerManager.get_player_from_member(inter.user)
+        s_player = self.playerManager.get_player_by_member(inter.user)
         if not s_player.is_alive:
             text = '犠牲者はアクションができません。ゲームが終了するまでお待ちください'
             await self.send_warning(inter,text)
@@ -178,7 +178,7 @@ class CommandHandler():
             await self.send_warning(inter,text)
             return
         # target playerについての処理
-        t_player = self.playerManager.get_player_from_role(name=target)
+        t_player = self.playerManager.get_player_by_role(name=target)
         if t_player is None:
             text = 'プレイヤーを選択してください。 ex. 「@player-ほげほげ」'
             await self.send_warning(inter, text)
@@ -189,7 +189,7 @@ class CommandHandler():
     async def vote(self, inter:Interaction, target:str):
         if not await self.is_ok_game_command(inter, "vote"):
             return
-        s_player = self.playerManager.get_player_from_member(inter.user)
+        s_player = self.playerManager.get_player_by_member(inter.user)
         if not s_player.is_alive:
             text = '犠牲者は投票ができません。ゲームが終了するまでお待ちください'
             await self.send_warning(inter,text)
@@ -198,7 +198,7 @@ class CommandHandler():
             text = 'もう投票は終えています。他のプレイヤーの投票が終わるまでお待ちください'
             await self.send_warning(inter,text)
             return        
-        t_player = self.playerManager.get_player_from_role(name=target)
+        t_player = self.playerManager.get_player_by_role(name=target)
         if t_player is None:
             text = 'プレイヤーを選択してください。 ex. 「@player-ほげほげ」'
             await self.send_warning(inter, text)

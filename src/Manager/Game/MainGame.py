@@ -1,4 +1,5 @@
 import asyncio
+import random
 import discord
 from discord import Interaction, ButtonStyle
 from Player.Player import Player
@@ -31,11 +32,13 @@ class MainGame():
         }
         self.vote_count = 0
         self.vote_count_message = []
+        self.is_final_vote = False
     def register_lobby_channel(self, channel:discord.TextChannel):
         self.lobby_channel = channel
     def reset_game(self):
         self.vote_count = 0
         self.vote_count_message.clear()
+        self.is_final_vote = False
         self.gameStateManager.game_wait()
         self.gameRuleManager.reset_rule()
     # プレイヤーの役職を送信する
@@ -129,14 +132,17 @@ class MainGame():
         title = f'#### {self.gameStateManager.day}日目の朝 ####'
         text = '夜が明けました。昨晩襲撃されたプレイヤーは・・・\n\n'
         night_action_result = self.playerManager.night_action_result()
+        print(night_action_result)
         try:
+            player:Player = None
             if len(night_action_result['kill']) == 1:
-                player:Player = night_action_result['kill'][0]
-                player.fall_victim()
-                text += f'> **{player}**\n\nです。\n' \
-                        f'{player}はゲームが終わるまでゲームの内容について話すことができません\n\n'
+                player = night_action_result['kill'][0]
             else:
-                text += 'いませんでした！人狼の襲撃は失敗したようです。\n\n'
+                random.shuffle(night_action_result['kill'])
+                player = night_action_result['kill'][0]
+            player.fall_victim()
+            text += f'> **{player}**\n\nです。\n' \
+                    f'{player}はゲームが終わるまでゲームの内容について話すことができません\n\n'
         except:
             text += 'いませんでした！人狼の襲撃は失敗したようです。\n\n'
         text += 'そして新たに人狼と疑われているプレイヤーは・・・\n\n'
@@ -202,7 +208,7 @@ class MainGame():
         for player in self.playerManager.get_player_list():
             if not player.is_alive:
                 text += '\n※犠牲者は投票ができません。'
-                embed.description = text
+                vote_embed.description = text
             await player.channel.send(embed=embed)
             message = await player.channel.send(embed=vote_embed)
             self.vote_count_message.append(message)
@@ -222,14 +228,82 @@ class MainGame():
         self.vote_count += 1
         text = f'**{target}**に投票しました。他のプレイヤーの投票が終わるまでお待ちください。'
         await inter.followup.send(text)
-        vote_title, vote_text = self.playerManager.get_vote_count_display()
+        vote_title, vote_text = '', ''
+        if not self.is_final_vote:
+            vote_title, vote_text = self.playerManager.get_vote_count_display()
+        else:
+            vote_title, vote_text = self.playerManager.get_judgement_display()
         vote_embed = discord.Embed(title=vote_title, description=vote_text, color=self.colors['vote'])
         for mes in self.vote_count_message:
+            player = self.playerManager.get_player_by_channel(mes.channel)
+            if not player.is_alive:
+                vote_text += '\n※犠牲者は投票ができません'
+            vote_embed.description = vote_text
             await mes.edit(embed=vote_embed)
         if self.vote_count == self.playerManager.get_alive_player_count():
             self.vote_count = 0
-            text = '投票が終了しました'
+            self.vote_count_message.clear()
+            text = '全員の投票が完了しました'
             await self.lobby_channel.send(text)
+            await self.send_judgement()
+    async def send_judgement(self):
+        title = '#### 処刑の時間 ####'
+        text = '投票が終わり、処刑の時間がやってきました。処刑されるプレイヤーは・・・\n'
+        victims:list = self.playerManager.judgement()
+        if len(victims) == 1:
+            self.is_final_vote = False
+            victim:Player = victims[0]
+            text += f'> {victim}\n\nです。{victim}はゲームが終わるまでゲームの内容について話すことはできません。'
+            victim.fall_victim()
+            print("send_judgement", victim,id(victim))
+            self.playerManager.reset_players_flags()
+            embed = discord.Embed(title=title, description=text, color=self.colors['judgement'])
+            await self.lobby_channel.send(embed=embed)
+            self.gameStateManager.next_phase()
+            # =========================
+            # TODO: 人狼or市民の勝利判定
+            # @ここでどちらかが勝利なら終了
+            # =========================
+            await self.send_night_phase()
+            return
+        else:
+            if not self.is_final_vote:
+                self.is_final_vote = True
+                for victim in victims:
+                    text += f'> {victim}\n'
+                text += '\nです。\n最多票が複数名いたので決選投票を行います\n' \
+                        'プライベートチャンネルで決選投票をしてください。'
+                embed = discord.Embed(title=title, description=text, color=self.colors['judgement'])
+                await self.lobby_channel.send(embed=embed)
+                self.playerManager.reset_players_flags()
+                title, text = self.playerManager.get_judgement_display()
+                embed = discord.Embed(title=title, description=text, color=self.colors['vote'])
+                for player in self.playerManager.get_player_list():
+                    if not player.is_alive:
+                        text += '\n※犠牲者は投票ができません。'
+                        embed.description = text
+                    message = await player.channel.send(embed=embed)
+                    self.vote_count_message.append(message)
+            else:
+                self.is_final_vote = False
+                random.shuffle(victims)
+                victim = victims[0]
+                text += f'> {victim}\n\nです。※再度、最多票が複数名いたためランダムに処刑されます。\n'
+                embed = discord.Embed(title=title, description=text, color=self.colors['judgement'])
+                victim.fall_victim()
+                print("send_judgement", victim,id(victim))
+                self.playerManager.reset_judgement()
+                self.playerManager.reset_players_flags()
+                await self.lobby_channel.send(embed=embed)
+                self.gameStateManager.next_phase()
+                # =========================
+                # TODO: 人狼or市民の勝利判定
+                # @ここでどちらかが勝利なら終了
+                # =========================
+                await self.send_night_phase()
+    # 勝利判定
+    async def send_who_win(self, end=False) -> bool:
+        pass
     # 残り時間を増やすボタン
     class PlusButton(discord.ui.Button):
         def __init__(self, *, 
