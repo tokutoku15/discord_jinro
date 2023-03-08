@@ -29,9 +29,6 @@ class Player():
         self.vote_count += 1
     def reset_vote_count(self):
         self.vote_count = 0
-    # 行動の終了
-    def finish_act(self):
-        self.is_act_finish = True
     # 占い師に占われる
     def seer(self):
         self.is_reveal = True
@@ -55,3 +52,9 @@ class Player():
     # アクションのリセット
     def reset_act(self):
         self.has_acted = False
+    # ゲーム終了後のリセット
+    def reset_all_flags(self):
+        self.is_alive = True
+        self.is_reveal = False
+        self.reset_flags()
+        self.reset_vote_count()

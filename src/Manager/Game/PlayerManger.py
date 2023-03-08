@@ -196,11 +196,19 @@ class PlayerManager():
         return alive_appear_citizen, alive_appear_werewolf
     # プレイヤーを陣営ごとにまとめて取得
     def get_player_group_list(self) -> tuple[list, list]:
-        citizen = []
-        werewolf = []
-        for player in self.player_dict.values():
-            if player.group == 'citizen':
-                citizen.append(player)
+        citizen = ''
+        werewolf = ''
+        alive = lambda x : '生存' if x else '死亡'
+        for mem, player in self.player_dict.items():
+            print(player.is_alive, alive(player.is_alive))
+            if player.job.group == 'citizen':
+                citizen += '<@{id}> [{job}] ({alive})\n' \
+                .format(id=mem.id, job=player.job.name_with_emoji(), alive=alive(player.is_alive))
             else:
-                werewolf.append(werewolf)
+                werewolf += '<@{id}> [{job}] ({alive})\n' \
+                .format(id=mem.id, job=player.job.name_with_emoji(), alive=alive(player.is_alive))
         return citizen, werewolf
+    # ゲーム終了後のリセット
+    def game_end_reset(self):
+        for player in self.player_dict.values():
+            player.reset_all_flags()

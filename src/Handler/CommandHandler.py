@@ -25,7 +25,7 @@ class CommandHandler():
         self.mainGame = MainGame(self.gameRuleManager, self.gameStateManager, self.playerManager)
         self.setting_menu:discord.Message = None
     # Discordの情報をハンドラにも紐づける
-    def link_discord_info(self, guild:Guild, lobby:TextChannel, jinro:TextChannel, voice:VoiceChannel):
+    def link_discord_info(self, guild:Guild, lobby:TextChannel, jinro:TextChannel, voice:VoiceChannel, bot:discord.Client):
         self.guild = guild
         self.lobby_channel = lobby
         self.jinro_channel = jinro
@@ -34,6 +34,7 @@ class CommandHandler():
         self.roleManager = RoleManager(guild=self.guild)
         self.textChannelManager = TextChannelManager(guild=self.guild)
         self.mainGame.register_lobby_channel(lobby)
+        self.mainGame.set_bot(bot)
         emojis = self.emojiManager.get_emoji_list()
         self.gameRuleManager.set_job_emoji(emojis)
         
@@ -48,6 +49,8 @@ class CommandHandler():
         if not await self.is_wait_mode(inter):
             return
         await inter.response.defer(thinking=False)
+        await self.delete_channels_roles()
+        self.playerManager.reset_players()
         self.gameStateManager.game_setting()
         text = '今からゲームの設定を始めます。\n「**/menu**」や「**/job**」で設定を変更してください。\n' \
                 '「**/join**」でゲームに参加、「**/exit**」でゲームから退出できます。\n' \

@@ -7,6 +7,7 @@ from Job.Citizen import Citizen
 from Manager.Game.GameRuleManager import GameRuleManager
 from Manager.Game.GameStateManager import GameStateManager
 from Manager.Game.PlayerManger import PlayerManager
+from Manager.Discord.TextChannelManager import TextChannelManager
 
 class MainGame():
     def __init__(self,
@@ -27,7 +28,7 @@ class MainGame():
                 'citizen' : 0xfffafa,
                 'werewolf' : 0xdc143c,
             },
-            'judgement' : 0xdc143c,
+            'judgement' : 0x333333,
             'now' : 0x3c14dc,
         }
         self.vote_count = 0
@@ -35,12 +36,15 @@ class MainGame():
         self.is_final_vote = False
     def register_lobby_channel(self, channel:discord.TextChannel):
         self.lobby_channel = channel
+    def set_bot(self, bot:discord.Client):
+        self.bot = bot
     def reset_game(self):
         self.vote_count = 0
         self.vote_count_message.clear()
         self.is_final_vote = False
         self.gameStateManager.game_wait()
         self.gameRuleManager.reset_rule()
+        self.playerManager.game_end_reset()
     # プレイヤーの役職を送信する
     async def send_players_job(self):
         for player in self.playerManager.get_player_list():
@@ -56,6 +60,8 @@ class MainGame():
         title = f'#### {self.gameStateManager.day}日目の夜 ####'
         text = '恐ろしい夜がやってきました。これから夜のアクションを始めます。\n' \
                 '**「player-」**から始まるプライベートチャンネルでアクションを実行してください。'
+        if self.gameStateManager.day >= 2:
+            text = '容疑者を処刑したにもかかわらず、再び' + text
         embed = discord.Embed(title=title, description=text, color=self.colors['night'])
         await self.lobby_channel.send(embed=embed)
         # await asyncio.sleep(5)
@@ -146,6 +152,9 @@ class MainGame():
             player.fall_victim()
             text += f'> **{player}**\n\nです。\n' \
                     f'{player}はゲームが終わるまでゲームの内容について話すことができません\n\n'
+            if await self.send_who_win():
+                self.reset_game()
+                return
         except:
             text += 'いませんでした！人狼の襲撃は失敗したようです。\n\n'
         text += 'そして新たに人狼と疑われているプレイヤーは・・・\n\n'
@@ -212,7 +221,7 @@ class MainGame():
         vote_embed = discord.Embed(title=vote_title, description=vote_text, color=self.colors['vote'])
         for player in self.playerManager.get_player_list():
             if not player.is_alive:
-                text += '\n※犠牲者は投票ができません。'
+                vote_text += '\n※犠牲者は投票ができません。'
                 vote_embed.description = text
             await player.channel.send(embed=embed)
             message = await player.channel.send(embed=vote_embed)
@@ -270,6 +279,7 @@ class MainGame():
             # @ここでどちらかが勝利なら終了
             # =========================
             if await self.send_who_win():
+                self.reset_game()
                 return
             await self.send_night_phase()
             return
@@ -308,6 +318,7 @@ class MainGame():
                 # @ここでどちらかが勝利なら終了
                 # =========================
                 if await self.send_who_win():
+                    self.reset_game()
                     return
                 await self.send_night_phase()
     # 勝利判定
@@ -315,19 +326,62 @@ class MainGame():
         alive_citizen, alive_werewolf = self.playerManager.get_alive_appear_group()
         is_knight_alive = self.playerManager.get_is_knight_alive()
         print(alive_citizen, alive_werewolf, is_knight_alive)
-        if not is_knight_alive and alive_citizen <= alive_werewolf + 1:
+        # 騎士がいないかつ次の夜の襲撃で人狼の勝ちが確定しているとき
+        if self.gameStateManager.get_now_phase() == 'night' and \
+            not is_knight_alive and alive_citizen == alive_werewolf + 1:
+            for player in self.playerManager.get_player_list():
+                if player.is_alive and player.job.group == 'citizen':
+                    player.fall_victim()
+                    break
             text = '人狼の勝利'
-            await self.lobby_channel.send(text)
+            embed = self.game_result_embed('werewolf', True)
+            await self.lobby_channel.send(embed=embed)
             end = True
-        elif is_knight_alive and alive_citizen <= alive_werewolf:
+        # 騎士がいてかつ人狼と市民の数が等しいとき
+        elif alive_citizen <= alive_werewolf:
             text = '人狼の勝利'
-            await self.lobby_channel.send(text)
+            embed = self.game_result_embed('werewolf', False)
+            await self.lobby_channel.send(embed=embed)
             end = True
+        # 人狼の数が0の時
         elif alive_werewolf == 0:
             text = '市民の勝利'
-            await self.lobby_channel.send(text)
+            embed = self.game_result_embed('citizen', False)
+            await self.lobby_channel.send(embed=embed)
             end = True
+        if end:
+            text = 'お疲れ様でした。\n続けてゲームをするときは**/game**コマンド、終了するときは**/stop**コマンドを実行してください。'
+            embed = discord.Embed(title='ゲーム終了', description=text)
+            embed.set_author(name=self.bot.user,icon_url=self.bot.user.avatar)
+            await self.lobby_channel.send(embed=embed)
+            self.gameStateManager.game_result()
         return end
+    # リザルトの埋め込みテキスト
+    def game_result_embed(self, group:str, next_night_kill:bool) -> discord.Embed:
+        title = ''
+        text = ''
+        emoji_url = self.gameRuleManager.get_job_url(group)
+        color = 0x000000
+        if group == 'citizen':
+            title = '市民の勝利！'
+            text = '全ての人狼を処刑して平和な村が訪れました。'
+            color = self.colors['job']['citizen']
+        else:
+            title = '人狼の勝利！'
+            text = '人狼と市民の数は同じになりました。'
+            color = self.colors['job']['werewolf']
+            if next_night_kill:
+                text = '再び夜が訪れました。市民が人狼に襲撃され、' + text
+        embed = discord.Embed(title=title, description=text, color=color)
+        citizen, werewolf = self.playerManager.get_player_group_list()
+        if group == 'citizen':
+            embed.add_field(name='Winner', value=citizen, inline=False)
+            embed.add_field(name='Loser', value=werewolf, inline=False)
+        else:
+            embed.add_field(name='Winner', value=werewolf, inline=False)
+            embed.add_field(name='Loser', value=citizen, inline=False)
+        embed.set_thumbnail(url=emoji_url)
+        return embed
     # 残り時間を増やすボタン
     class PlusButton(discord.ui.Button):
         def __init__(self, *, 

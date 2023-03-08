@@ -19,7 +19,7 @@ class Job(metaclass=ABCMeta):
     def __str__(self):
         return self.job_display_name
     def name_with_emoji(self) -> str:
-        return f'{self.emoji}{str(self)}'
+        return f'{str(self)}{self.emoji}'
     def set_emoji(self, emoji:Emoji):
         self.emoji = emoji
     def get_emoji(self):

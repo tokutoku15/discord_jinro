@@ -98,6 +98,13 @@ class GameRuleManager():
     def set_job_emoji(self, emojis:dict):
         for job in self.job_num.keys():
             job.set_emoji(emojis[job.job_name])
+    # ジョブの絵文字urlを取得
+    def get_job_url(self, name:str) -> str:
+        url = 'https://cdn.discordapp.com/emojis/'
+        for job in self.job_num.keys():
+            if job.job_name == name:
+                url += str(job.get_emoji().id)
+        return url
     # gameコマンドで呼び出されるゲーム設定の埋め込みテキスト
     def game_setting_embed(self, pManager:PlayerManager) -> discord.Embed:
         embed = discord.Embed(title='#### 人狼ゲームの設定 ####', color=self.setting_color)
@@ -111,7 +118,7 @@ class GameRuleManager():
         time = '{:02d}分{:02d}秒'.format(self.discuss_time//60, self.discuss_time%60)
         embed.add_field(name='話し合いの時間', value=time, inline=True)
         job_num_text = '\n'.join([
-            '{} : **{}**人'.format(job.name_with_emoji(), num)
+            '{}{} : **{}**人'.format(job.get_emoji(),job,num)
             for job, num in self.job_num.items()
         ])
         job_sum = self.get_job_sum()

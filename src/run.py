@@ -128,6 +128,7 @@ async def on_ready():
         lobby=lobby_channel,
         jinro=jinro_channel,
         voice=voice_channel,
+        bot=client,
     )
     await cmdHandler.delete_channels_roles()
     print(client.user.name)

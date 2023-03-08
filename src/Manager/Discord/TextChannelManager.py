@@ -2,7 +2,7 @@ import discord
 from discord.utils import get
 
 class TextChannelManager():
-    def __init__(self, guild:discord.Guild):
+    def __init__(self, guild:discord.Guild=None):
         self.game_guild = guild
         self.private_channels = []
     # プレイヤーごとにプライベートチャンネルを作る
