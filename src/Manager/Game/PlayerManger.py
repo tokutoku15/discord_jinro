@@ -1,5 +1,4 @@
 import discord
-from discord.utils import get
 from Player.Player import Player
 from Job.Job import Job
 

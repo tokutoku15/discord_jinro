@@ -55,6 +55,9 @@ class Player():
     # ゲーム終了後のリセット
     def reset_all_flags(self):
         self.is_alive = True
+        self.has_acted = False
+        self.vote_count = 0
         self.is_reveal = False
-        self.reset_flags()
-        self.reset_vote_count()
+        self.is_protected = False
+        self.will_be_kill = False
+        self.job:Job = None
