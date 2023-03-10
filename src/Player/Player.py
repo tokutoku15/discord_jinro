@@ -27,8 +27,6 @@ class Player():
     # 自分に投票される
     def vote(self):
         self.vote_count += 1
-    def reset_vote_count(self):
-        self.vote_count = 0
     # 占い師に占われる
     def seer(self):
         self.is_reveal = True
@@ -40,6 +38,7 @@ class Player():
         self.will_be_kill = True
     # フラグをリセットする
     def reset_flags(self):
+        self.vote_count = 0
         self.has_acted = False
         self.is_protected = False
         self.will_be_kill = False

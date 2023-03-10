@@ -170,9 +170,7 @@ class PlayerManager():
     
     def reset_players_flags(self):
         for player in self.player_dict.values():
-            if player.is_alive:
-                player.reset_flags()
-            player.reset_vote_count()
+            player.reset_flags()
     # 生存している騎士がいるかどうか
     # 人狼の勝利判定に必要
     def get_is_knight_alive(self) -> bool:
